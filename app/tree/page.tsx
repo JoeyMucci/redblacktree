@@ -19,6 +19,10 @@ const makeNullNode = (par : Node | null) : Node => {
     return {value: MIN, isRed: false, left: null, right: null, parent: par};
 }
 
+const isNullNode = (n : Node) : boolean => { return n.value === MIN }
+
+const isRoot = (n : Node) : boolean => { return !n.parent }
+
 const makePlaceholderNode = () : Node => {
     return {value: MAX, isRed: false, left: null, right: null, parent: null};
 }
@@ -26,6 +30,8 @@ const makePlaceholderNode = () : Node => {
 const MAXLEVELS = 6;
 const BUTTONSIZE = 40;
 let root : Node = makeNullNode(null);
+
+const isLeftChild = (n : Node) : boolean => { return !isRoot(n) && n.value === n.parent!.left!.value }
 
 const assignLeftChild = (parent: Node, child : Node) : void => {
     parent.left = child;
@@ -37,91 +43,155 @@ const assignRightChild = (parent: Node, child : Node) : void => {
     child.parent = parent;
 }
 
-const exchangeChildren = (oldChild: Node, newChild: Node) : void => {
-    if(!oldChild.parent) {
+const transferParent = (oldChild: Node, newChild: Node) : void => {
+    if(isRoot(oldChild)) {
         root = newChild;
         newChild.parent = null;
-        return;
     }
-
-    const isLeft : boolean = oldChild.parent.left!.value === oldChild.value;
-
-    if(isLeft) {
-        assignLeftChild(oldChild.parent, newChild);
+    else if(isLeftChild(oldChild)) {
+        assignLeftChild(oldChild.parent!, newChild);
     }
     else {
-        assignRightChild(oldChild.parent, newChild);
+        assignRightChild(oldChild.parent!, newChild);
     }
 }
 
 // The newRoot for a rotation will never be the old root or a null node
 const rightRotate = (newRoot : Node) : void => {
     const par = newRoot.parent!;
-    exchangeChildren(par, newRoot);
+    transferParent(par, newRoot);
     assignLeftChild(par, newRoot.right!);
     assignRightChild(newRoot, par);
 }
 
 const leftRotate = (newRoot : Node) : void => {
     const par = newRoot.parent!;
-    exchangeChildren(par, newRoot);
+    transferParent(par, newRoot);
     assignRightChild(par, newRoot.left!);
     assignLeftChild(newRoot, par);
 }
 
 
-const correctDoubleRed = (baseRed: Node) : void => {
+const handleRedAlert = (baseRed: Node) : void => {
     // Root is red => make it black
-    if(!baseRed.parent) {
+    if(isRoot(baseRed)) {
         baseRed.isRed = false;
         return;
     }
 
     // Stop if parent is not red (i.e. there is no double red)
-    if(!baseRed.parent.isRed) {
+    if(!baseRed.parent!.isRed) {
         return;
     }
 
     // Grandpa must exist since parent is red and all reds have parents
-    const grandpa : Node = baseRed.parent.parent!;
-    const firstRedLeft : boolean = grandpa.value > baseRed.parent.value;
+    const grandpa : Node = baseRed.parent!.parent!;
+    const firstRedLeft : boolean = isLeftChild(baseRed.parent!);
     const uncle : Node = firstRedLeft ? grandpa.right! : grandpa.left!;
 
     // CASE 1: Red Uncle => Recolor parents, grandpa and move issue upwards
     if(uncle.isRed) {
         grandpa.isRed = true;
         uncle.isRed = false;
-        baseRed.parent.isRed = false;
-        correctDoubleRed(grandpa);
+        baseRed.parent!.isRed = false;
+        handleRedAlert(grandpa);
     }
 
     // CASE 2: Black Uncle => Rotate and make newRoot black, children of newRoot red
     else {
-        const secondRedLeft: boolean = baseRed.parent.value > baseRed.value;
+        const secondRedLeft: boolean = isLeftChild(baseRed);
 
         // Setup Rotation
         if(firstRedLeft !== secondRedLeft) {
-            const nextDoubleRed : Node = baseRed.parent;
+            const nextDoubleRed : Node = baseRed.parent!;
             if(firstRedLeft) {
                 leftRotate(baseRed);
             }
             else {
                 rightRotate(baseRed);
             }
-            correctDoubleRed(nextDoubleRed);
+            handleRedAlert(nextDoubleRed);
         }
 
         // Single Rotation
         else {
             if(firstRedLeft) {
-                rightRotate(baseRed.parent);
+                rightRotate(baseRed.parent!);
             }
             else {
-                leftRotate(baseRed.parent);
+                leftRotate(baseRed.parent!);
             }
-            baseRed.parent.isRed = false;
+            baseRed.parent!.isRed = false;
             grandpa.isRed = true;
         }  
+    }
+}
+
+const handleLackOfBlack = (baseBlack : Node, siblingLeft: boolean) : void => {
+    // Root cannot have a lack of black
+    if(isRoot(baseBlack)) {
+        return;
+    }
+
+    const sibling : Node = siblingLeft ? baseBlack.parent!.left! : baseBlack.parent!.right!;
+
+    // CASE 1: Red Sibling => Setup rotation to get black sibling
+    if(sibling.isRed) {
+        if(siblingLeft) {
+            rightRotate(sibling);
+        }
+        else {
+            leftRotate(sibling);
+        }
+        sibling.isRed = false;
+        baseBlack.parent!.isRed = true;
+        handleLackOfBlack(baseBlack, siblingLeft);
+    }
+
+    // CASE 2: Black Sibling 
+    else {
+        const rootIsRed : boolean = baseBlack.parent!.isRed;
+
+        // First try to find a red child of sibling to rotate
+        // One and done rotation (sibling and red are in same direction)
+        if(siblingLeft ? sibling.left!.isRed : sibling.right!.isRed) {
+            if(siblingLeft) {
+                rightRotate(sibling);
+            }
+            else {
+                leftRotate(sibling);
+            }
+
+            sibling.left!.isRed = false;
+            sibling.right!.isRed = false;
+            sibling.isRed = rootIsRed;
+        }
+
+        // Setup rotation (sibling and red are in different direction)
+        else if(siblingLeft ? sibling.right!.isRed : sibling.left!.isRed) {
+            if(siblingLeft) {
+                leftRotate(sibling.right!);
+            }
+            else {
+                rightRotate(sibling.left!);
+            }
+
+            sibling.isRed = true;
+            sibling.parent!.isRed = false;
+            handleLackOfBlack(baseBlack, siblingLeft);
+        }
+        
+        // There are no red children of sibling => recolor sibling 
+        // red and potentially move lack of black upwards
+        else {
+            sibling.isRed = true;
+            if(rootIsRed) {
+                baseBlack.parent!.isRed = false;
+            }
+            else {
+                handleLackOfBlack(baseBlack.parent!, !isLeftChild(baseBlack.parent!));
+            }
+        }
     }
 }
 
@@ -140,19 +210,19 @@ export default function Tree() {
         if(val <= MIN || val >= MAX || val === current.value) {
             // ERROR HANDLING
         }
-        else if(current.left === null || current.right === null) {
+        else if(isNullNode(current)) {
             current.value = val;
             current.isRed = true;
             current.left = makeNullNode(current);
             current.right = makeNullNode(current);
-            correctDoubleRed(current);
+            handleRedAlert(current);
             setTree(levelOrder(root));
         }
         else if(val < current.value) {
-            insert(current.left, val);
+            insert(current.left!, val);
         }
         else {
-            insert(current.right, val);
+            insert(current.right!, val);
         }
     }
 
@@ -163,19 +233,68 @@ export default function Tree() {
             insert(root, Math.floor((MIN + MAX) / 2))
         }
         else {
-            const io = inOrder(root);
             let maxi : number, mini : number;
             if(isLeft) {
                 maxi = n.parent.value;
-                const index = io.findIndex((nod : Node) => nod.value === maxi)
-                mini = index === 0 ? MIN : io[index - 1].value;
+                mini = inOrderPredecessor(maxi);
             }
             else {
                 mini = n.parent.value;
-                const index = io.findIndex((nod : Node) => nod.value === mini)
-                maxi = index === io.length - 1 ? MAX : io[index + 1].value;
+                maxi = inOrderSuccessor(mini);
             }
             insert(root, Math.floor((mini + maxi) / 2))
+        }
+    }
+
+    const remove = (current: Node, val: number) : void => {
+        if(val <= MIN || val >= MAX) {
+            // ERROR HANDLING
+        }
+        else if(current.value === val) {
+            const hasLeftChild : boolean = !isNullNode(current.left!);
+            const hasRightChild : boolean = !isNullNode(current.right!);
+            let skipUpdate : boolean = false;
+
+            if(!hasLeftChild && !hasRightChild) {
+                const nullNode : Node = makeNullNode(null);
+                const ilc = isLeftChild(current);
+                transferParent(current, nullNode);   
+                if(!current.isRed) {
+                    handleLackOfBlack(nullNode, !ilc);
+                }
+            }
+
+            // One child => child is red => current is black => 
+            // Remove current and replace it with its child, 
+            // color it black so no lack of black
+            else if(hasLeftChild && !hasRightChild) {
+                current.left!.isRed = false;
+                transferParent(current, current.left!);
+            }
+            else if(!hasLeftChild && hasRightChild) {
+                current.right!.isRed = false;
+                transferParent(current, current.right!);
+            }
+
+            // Two children => Copy value of predecessor into 
+            // current node then delete the predecessor 
+            else {
+                const iop = inOrderPredecessor(current.value);
+                current.value = iop;
+                remove(current.left!, iop);
+                skipUpdate = true; // Do not update the tree (for now)
+            }
+
+            if(!skipUpdate) {
+                setTree(levelOrder(root));
+            }
+            
+        }
+        else if(val < current.value) {
+            remove(current.left!, val);
+        }
+        else {
+            remove(current.right!, val);
         }
     }
 
@@ -186,6 +305,18 @@ export default function Tree() {
         const before = inOrder(n.left);
         const after = inOrder(n.right);
         return before.concat(n, after);
+    }
+
+    const inOrderPredecessor = (val : number) : number => {
+        const io = inOrder(root);
+        const index = io.findIndex((n : Node) => n.value === val)
+        return (index === -1 || index === 0) ? MIN : io[index - 1].value;
+    }
+
+    const inOrderSuccessor = (val : number) : number => {
+        const io = inOrder(root);
+        const index = io.findIndex((n : Node) => n.value === val)
+        return (index === -1 || index === io.length - 1) ? MAX : io[index + 1].value;
     }
 
     const levelOrder = (n : Node) : Node[][] => {
@@ -233,14 +364,14 @@ export default function Tree() {
                                     // REGULAR NODE
                                     if(n.value > MIN && n.value < MAX) {
                                         return (
-                                            <Button key={j} color={n.isRed ? "red" : "black"} size="compact-xs">
+                                            <Button key={j} color={n.isRed ? "red" : "black"} size="compact-xs" onClick={() => remove(root, n.value)}>
                                                 {n.value}
                                             </Button>
                                         )
                                     }
 
                                     // ADD NODE
-                                    if(n.value <= MIN) {
+                                    if(isNullNode(n)) {
                                         return (
                                             <Button key={j} color="gray" size="compact-xs" onClick={() => insertWrapper(n, j % 2 === 0)}>
                                                 Add
