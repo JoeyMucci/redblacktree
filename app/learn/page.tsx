@@ -1,70 +1,92 @@
 'use client';
 
 import Image from 'next/image'
-import Link from 'next/link'
+import { useScrollIntoView } from '@mantine/hooks';
 import { Group, Button, Title, Stack, Text, Accordion } from '@mantine/core'
 
+interface Rule {
+    title: string
+    statement: string
+    description: string
+    value: number
+    alt: string
+}
 
-const rulesData = [
+const rulesData : Rule[] = [
     {
         title: "Binary Search Tree Property",
-        value: "1",
-        description: "A Red-Black Tree is a Binary Search Tree",
+        statement: "A Red-Black Tree is a Binary Search Tree",
+        description: "So this is not a Red-Black Tree because the values are not in order, as they would be in a BST",
+        value: 1,      
         alt: "An aspiring Red-Black Tree that  does not satisfy all properties"
     },
     {
         title: "Node Color Property",
-        description: "Every node in the tree is either red or black",
-        value: "2",
+        statement: "Every node in the tree is either red or black",
+        description: `So this is not a Red-Black Tree because there is a magenta node. We should have known a magenta-colored
+        node was not gonna fly in a Red-Black Tree, I mean it's in the name`,
+        value: 2,
         alt: "An aspiring Red-Black Tree that  does not satisfy all properties"
     },
     {
         title: "Root Color Property",
-        description: "The root of the tree is black",
-        value: "3",
+        statement: "The root of the tree is black",
+        description: "So this is not a Red-Black Tree because the root is red",
+        value: 3,
         alt: "An aspiring Red-Black Tree that  does not satisfy all properties"
     },
     {
         title: "Double Red Property",
-        description: "A red node cannot have another red node as a child",
-        value: "4",
+        statement: "A red node cannot have a red node as a child",
+        description: "So this is not a Red-Black Tree since there is a \"double red\"",
+        value: 4,
         alt: "An aspiring Red-Black Tree that  does not satisfy all properties"
     },
     {
         title: "Black Height Property",
-        description: "Every path to an external node has the same amount of black internal nodes",
-        value: "5",
+        statement: "Every path to an external node has the same amount of black internal nodes",
+        description: `At first glance it looks like all paths to an external node have one internal black node. But in fact there is one path with 
+        one black internal node and other paths with two black internal nodes. The Null Node Property explains the problem here in more detail.`,
+        value: 5,
         alt: "An aspiring Red-Black Tree that  does not satisfy all properties"
     },
     {
-        title: "Null Node Property (Explanation of Above)",
-        description: "Every external node is null node colored black (not typically shown)",
-        value: "6",
+        title: "Null Node Property",
+        statement: "Every external node is a null node colored black (not typically shown)",
+        description: `So, every red node must have two black children that are either both null or both not null, otherwise the black 
+        height property would be violated. Since this tree has a red node with only one non-null child it is not a Red-Black Tree`,
+        value: 6,
         alt: "An aspiring Red-Black Tree that  does not satisfy all properties"
     },
 ]
 
 export default function Learn() {
+    const { scrollIntoView, targetRef } = useScrollIntoView<HTMLDivElement>();
 
+
+    const scrollButton = (newRef : HTMLDivElement) : void => {
+        targetRef.current = newRef;
+        scrollIntoView({ alignment: 'start' })
+    }
 
     return (
         <>
             <Stack align="center" justify="center">
                 <Title order={1}>Learn Red-Black Trees</Title>
                 <Group>
-                    <Button component={Link} href="#bst">
+                    <Button onClick={() => scrollButton(document.getElementById("bst") as HTMLDivElement)}>
                         BST Background
                     </Button>
-                    <Button component={Link} href="#rules">
+                    <Button onClick={() => scrollButton(document.getElementById("rules") as HTMLDivElement)}>
                         Red-Black Rules
                     </Button>
-                    <Button component={Link} href="#why">
+                    <Button onClick={() => scrollButton(document.getElementById("why") as HTMLDivElement)}>
                         Why Red-Black?
                     </Button>
-                    <Button component={Link} href="#insert">
+                    <Button onClick={() => scrollButton(document.getElementById("insert") as HTMLDivElement)}>
                         How to Insert
                     </Button>
-                    <Button component={Link} href="#delete">
+                    <Button onClick={() => scrollButton(document.getElementById("delete") as HTMLDivElement)}>
                         How to Delete
                     </Button>
                 </Group>
@@ -96,18 +118,14 @@ export default function Learn() {
                 <br />
                 <br />
                 <Title order={2} id="bst">Binary Search Tree Prerequisites</Title>
-                <Title order={2} id="rules">Red-Black Tree Rules</Title>
-                {/* <List>
-                    {rulesData.map((rule) => (
-                        <List.Item key={rule.value}>{rule.description}</List.Item>
-                    ))}
-                </List> */}
 
+                <Title order={2} id="rules">Red-Black Tree Rules</Title>
                 <Accordion style={{width: 450}}>
                     {rulesData.map((rule) => (
-                        <Accordion.Item key={rule.value} value={rule.value}>
+                        <Accordion.Item key={rule.value} value={rule.value.toString()}>
                             <Accordion.Control>{rule.title}</Accordion.Control>
                             <Accordion.Panel>
+                                <Text fw={700}>{rule.statement}</Text>
                                 <Text>{rule.description}</Text>
                                 <Image
                                     src={`/rbimages/rule${rule.value}.png`}
