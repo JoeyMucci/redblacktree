@@ -60,8 +60,10 @@ const rulesData : Rule[] = [
     {
         title: "Null Node Property",
         statement: "Every external node is a null node colored black (not typically shown)",
-        description: `So, every red node must have two black children that are either both null or both not null, otherwise the black 
-        height property would be violated. Since this tree has a red node with only one non-null child it is not a Red-Black Tree`,
+        description: `So we have to be careful when considering the different paths for the Black Height Property. A consequence of the Null Node 
+        Property is that every red node must have two black children that are either both null or both not null, otherwise the black 
+        height property would be violated. In this example, we see that a red node has one null child and one non-null child, which in turn
+        violates the Black Height Property. Therefore, this is not a Red-Black Tree.`,
         value: 6,
         alt: "An aspiring Red-Black Tree that  does not satisfy all properties"
     },
@@ -229,7 +231,7 @@ export default function Learn() {
 
                 <Text style={{width: 450}}>
                     Suppose we want to delete 66 from the BST example from earlier. First, we would swap its value
-                    with the largest value less than it, which is 55. 
+                    with the largest value less than it, which is 58. 
                 </Text>
 
                 <Image
@@ -240,7 +242,7 @@ export default function Learn() {
                 />
 
                 <Text style={{width: 450}}>
-                    Now since 66 only has one child, we can simply delete it and have it be replaced by it's child, 25. 
+                    Now since 66 only has one child, we can simply delete it and have it be replaced by its child, 25. 
                 </Text>
 
                 <Image
@@ -280,34 +282,42 @@ export default function Learn() {
 
                 <Title order={2} id="why">Advantages of Red-Black Tree</Title>
 
+                <Text style={{width: 450}}>
+                    Binary Search Trees are great because, on average, we can search, insert, and delete in <code>O(logn)</code>{" "}
+                    time, which is considerably faster than <code>O(n)</code> time. 
+                </Text>
 
-                <br />
-                <br />
-                <br />
-                <br />
-                <br />
-                <br />
-                <br />
-                <br />
-                <br />
-                <br />
-                <br />
-                <br />
-                <br />
-                <br />
-                <br />
-                <br />
-                <br />
-                <br />
-                <br />
-                <br />
-                <br />
-                <br />
-                <br />
-                <br />
-                <br />
-                <br />
-                <br />
+                <Text style={{width: 450}}>
+                    The catch, however, is that word <i>average</i>. In the worst case, binary search trees still take <code>O(n)</code>{" "}
+                    time for those three critical operations. Consider the following example...
+                </Text>
+
+                <Image
+                    src="/lopsided.png"
+                    width={425}
+                    height={850}
+                    alt="An example of a lopsided binary search tree"
+                />
+
+                <Text style={{width: 450}}>
+                    Since all the nodes are on one side of the tree, one must visit all the nodes to search, insert, and delete. 
+                    And while this may seem like a contrived example incredibly unlikely to occur in practice, this scenario is exactly
+                    what will happen if a list of elements already sorted gets put into a BST. 
+                </Text>
+
+                <Text style={{width: 450}}>
+                    Thankfully, Red-Black Trees offer a solution. The properties mentioned above force the tree to remain relatively{" "}
+                    <i>balanced</i>. Taken together, the Double Red property and the Black Height property guarantee that the longest path in the tree
+                    is no longer than twice the length of the shortest path in the tree. This is easy to see because the shortest path will consist of a certain 
+                    amount of black nodes and any other path must consist of the same amount of black nodes (by the Black Height Property) and at most the same number of red nodes 
+                    (if there were more red nodes than black nodes the Double Red Property would have to be violated). The end result is that the tree height is always{" "} 
+                    <code>O(logn)</code> instead of <code>O(n)</code>, which means that the three crucial operations can be done in <code>O(logn)</code> time!
+                </Text>
+
+                <Text style={{width: 450}}>
+                    Of course, any operation that changes the tree could jeopardize those properties that help us achieve balance. As such, we will
+                    need to put in some extra work when inserting and deleting to make sure the tree still satisfies the Red-Black Properties. 
+                </Text>
 
                 <Title order={2} id="insert">Insert Operation in Red-Black Tree</Title>
 
