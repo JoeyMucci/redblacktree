@@ -319,35 +319,56 @@ export default function Learn() {
                     need to put in some extra work when inserting and deleting to make sure the tree still satisfies the Red-Black Properties. 
                 </Text>
 
-                <Title order={2} id="insert">Insert Operation in Red-Black Tree</Title>
+                <Divider my="md" style={{width:'100%'}} color='white'/>
 
-                <br />
-                <br />
-                <br />
-                <br />
-                <br />
-                <br />
-                <br />
-                <br />
-                <br />
-                <br />
-                <br />
-                <br />
-                <br />
-                <br />
-                <br />
-                <br />
-                <br />
-                <br />
-                <br />
-                <br />
-                <br />
-                <br />
-                <br />
-                <br />
-                <br />
-                <br />
-                <br />
+                <Title order={2} id="insert">Insert Operation in Red-Black Tree</Title>
+                    <Text style={{width: 450}}>
+                        When we insert a node, we always let it be red to start. If its parent is black, we have not violated
+                        any properties and we are done (yipee). However, if we insert a red node and its parent is red, we have just 
+                        caused violated the Double Red Property, triggering what I like to call a <span style={{color : "red"}}>RED ALERT</span>.
+                    </Text>
+
+                    <Text style={{width: 450}}>
+                        Here is a diagram showing the general logic to insert and resolve a <span style={{color : "red"}}>RED ALERT</span>. Some
+                        of the instructions may be unclear at this stage but we will visit each in turn. 
+                    </Text>
+
+                    <Image
+                        src="/insert.png"
+                        width={425}
+                        height={425}
+                        alt="An example of a binary search tree"
+                    />
+
+                    <Title order={3}>Parent's sibling is red</Title>
+                        <Text style={{width: 450}}>
+                            When the parent's sibling is red, change the color of the parent and its sibling to black. Then, change the color
+                            of the grandparent to red. Now, the grandparent being changed to red could trigger another <span style={{color : "red"}}>RED ALERT</span>{" "}
+                            higher up the tree. Importantly, if the root is colored red this way it should instantly be changed back to black due to the
+                            Root Color Property. Since every time the issue recurs closer to the root, there could only
+                            be <code>O(logn)</code> redos. Thus, the overall time complexity for delete is still <code>O(logn)</code>.
+                        </Text>
+
+                        <Image
+                            src="/insert_red_sibling.gif"
+                            unoptimized
+                            width={425}
+                            height={425}
+                            alt="An GIF showing an insert when the parent and its sibling are red"
+                        />
+
+
+                    <Title order={3}>Parent's sibling is black</Title>
+                        <Text style={{width: 450}}>
+                            When the parent's sibling is black, we need to do something called a rotation. Rotations can be left or
+                            right, and there are technically two types. However, a type 2 left rotation is just a right rotation
+                            followed by a left rotation, and vice versa. For this reason, this tutorial will only teach the type 1 rotation, since
+                            that is the only that strictly needs to be learned. Of course, if you already know the two rotation types from say, 
+                            AVL trees, then you need not shift your way of thinking to ultimately understand Red-Black trees. 
+                        </Text>
+
+                        
+                    
                 <Title order={2} id="delete">Delete Operation in Red-Black Tree</Title>
             </Stack>
         </>
