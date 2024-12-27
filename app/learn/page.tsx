@@ -143,7 +143,9 @@ export default function Learn() {
                     <List.Item>Node - A part of the tree that holds a value</List.Item>
                     <List.Item>Root - The first/highest node in the tree</List.Item>
                     <List.Item>Child - A node that can be accessed from its parent</List.Item>
+                    <List.Item>Siblings - Nodes that have the same parent</List.Item>
                     <List.Item>Parent - A node that "points" to its children</List.Item>
+                    <List.Item>Grandparent - A child's parent's parent</List.Item>
                     <List.Item>Leaf/External Node - A node that has no children </List.Item>
                     <List.Item>Internal Node - A node that has children </List.Item>
                     <List.Item>Height - Length of longest path from root to leaf</List.Item>
@@ -337,15 +339,17 @@ export default function Learn() {
                         src="/insert.png"
                         width={425}
                         height={425}
-                        alt="An example of a binary search tree"
+                        alt="A flow chart showing the logic to insert into a Red-Black Tree"
                     />
+
+                    <Divider my="md" style={{width:'50%'}} color='white'/>
 
                     <Title order={3}>Parent's sibling is red</Title>
                         <Text style={{width: 450}}>
                             When the parent's sibling is red, change the color of the parent and its sibling to black. Then, change the color
                             of the grandparent to red. Now, the grandparent being changed to red could trigger another <span style={{color : "red"}}>RED ALERT</span>{" "}
-                            higher up the tree. Importantly, if the root is colored red this way it should instantly be changed back to black due to the
-                            Root Color Property. Since every time the issue recurs closer to the root, there could only
+                            higher up the tree, which could be this case again or a different case. Also, if the root is colored red this way it should instantly be 
+                            changed back to black due to the Root Color Property. Since every time the issue recurs closer to the root, there could only
                             be <code>O(logn)</code> redos. Thus, the overall time complexity for delete is still <code>O(logn)</code>.
                         </Text>
 
@@ -357,6 +361,7 @@ export default function Learn() {
                             alt="An GIF showing an insert when the parent and its sibling are red"
                         />
 
+                    <Divider my="md" style={{width:'50%'}} color='white'/>
 
                     <Title order={3}>Parent's sibling is black</Title>
                         <Text style={{width: 450}}>
@@ -367,8 +372,60 @@ export default function Learn() {
                             AVL trees, then you need not shift your way of thinking to ultimately understand Red-Black trees. 
                         </Text>
 
-                        
+                        <Text style={{width: 450}}>
+                            A rotation is a reshuffling of the nodes that maintains the BST property of being in order while changing the lengths
+                            of different paths in some desirable manner. It is easiest to understand rotations by seeing them in action but essentially
+                            the node you are rotating around goes down one level in the tree while its right child (in the case of a left rotation),
+                            goes up one level. The trickiest part is what to do with the the grandchild of the node being rotated around that is one the 
+                            "inside". We need to change the parent of that node to its previous grandparent. Pay attention to the node labeled 25
+                             in the following diagram to better understand. 
+                        </Text>
+
+                        <Image
+                            src="/rotation.gif"
+                            unoptimized
+                            width={425}
+                            height={425}
+                            alt="An GIF showing an insert when the parent and its sibling are red"
+                        />
+
+                        <Text style={{width: 450}}>
+                            Now, for the actual Red-Black Tree rotation. If the red causing the <span style={{color : "red"}}>RED ALERT</span>{" "}
+                            is on the inside, then we first do a rotation around the parent to make it so the double red is on the outside. In other words, we are reducing
+                            the issue to a simpler case. If the red is on the outside, either from the start or because we just set it up, we do a rotation
+                            around the original grandparent in the direction that brings the red chain higher up the tree. After this rotation and this
+                            rotation only, color the node that is now in the grandparent spot black and ensure both of its children are red. Again, visuals help
+                            immensely, so study the following diagram that shows the worst case scenario. 
+                        </Text>
+
+
+                        <Image
+                            src="/insert_black_sibling.gif"
+                            unoptimized
+                            width={425}
+                            height={425}
+                            alt="An GIF showing an insert when the parent is red and its sibling is black"
+                        />
+
+                        <Text style={{width: 450}}>
+                            P.S. - If you are wondering why the second red node in the example has two black children when presumably we just inserted it,
+                            recall that it is possible for a <span style={{color : "red"}}>RED ALERT</span> to occur on a node higher up in the tree. This result
+                            occurs when the parent's sibling is red and coloring the grandparent red caused another problem since its parent was also red. So while
+                            in many scenarios the issue will be at the bottom of the tree, keep in mind that issues can really occur at any part of the tree due to
+                            the rolling up of errors. 
+                        </Text>
+
+                    <Divider my="md" style={{width:'50%'}} color='white'/>
                     
+                    <Title order={3}>But the Parent Has No Sibling?</Title>
+                        <Text style={{width: 450}}>
+                            Recall due to the Null Node Property that every external node is a null node colored black, even if it is not shown.
+                            So, if it <i>looks</i> like the parent has no sibling, it really just means the sibling is a black external null
+                            node, so the black sibling case applies.  
+                        </Text>
+    
+                <Divider my="md" style={{width:'100%'}} color='white'/>    
+
                 <Title order={2} id="delete">Delete Operation in Red-Black Tree</Title>
             </Stack>
         </>
