@@ -350,7 +350,7 @@ export default function Learn() {
                             of the grandparent to red. Now, the grandparent being changed to red could trigger another <span style={{color : "red"}}>RED ALERT</span>{" "}
                             higher up the tree, which could be this case again or a different case. Also, if the root is colored red this way it should instantly be 
                             changed back to black due to the Root Color Property. Since every time the issue recurs closer to the root, there could only
-                            be <code>O(logn)</code> redos. Thus, the overall time complexity for delete is still <code>O(logn)</code>.
+                            be <code>O(logn)</code> redos. Thus, the overall time complexity for insert is still <code>O(logn)</code>.
                         </Text>
 
                         <Image
@@ -358,7 +358,7 @@ export default function Learn() {
                             unoptimized
                             width={425}
                             height={425}
-                            alt="An GIF showing an insert when the parent and its sibling are red"
+                            alt="A GIF showing an insert when the parent and its sibling are red"
                         />
 
                     <Divider my="md" style={{width:'50%'}} color='white'/>
@@ -386,7 +386,7 @@ export default function Learn() {
                             unoptimized
                             width={425}
                             height={425}
-                            alt="An GIF showing an insert when the parent and its sibling are red"
+                            alt="A GIF showing an insert when the parent and its sibling are red"
                         />
 
                         <Text style={{width: 450}}>
@@ -404,7 +404,7 @@ export default function Learn() {
                             unoptimized
                             width={425}
                             height={425}
-                            alt="An GIF showing an insert when the parent is red and its sibling is black"
+                            alt="A GIF showing an insert when the parent is red and its sibling is black"
                         />
 
                         <Text style={{width: 450}}>
@@ -427,6 +427,95 @@ export default function Learn() {
                 <Divider my="md" style={{width:'100%'}} color='white'/>    
 
                 <Title order={2} id="delete">Delete Operation in Red-Black Tree</Title>
+                    <Text style={{width: 450}}>
+                        The process for deleting a node is follows the same base rules as for a BST. If the color of the node we actually
+                        end up removing is red, then no additional action is required. And if the node is black with
+                        one red child, then all we need to do is delete, replace with the child as normal, and color it black. Otherwise, we will 
+                        have an issue where the Black Height Property is violated and one subtree has a smaller black height than necessary. I like 
+                        to call this scenario a <span style={{color : "white"}}>LACK OF BLACK</span>. 
+                    </Text>
+
+                    <Text style={{width: 450}}>
+                        Here is a diagram showing the general logic to delete and resolve a <span style={{color : "white"}}>LACK OF BLACK</span>. Some
+                        of the instructions may be unclear at this stage but we will visit each in turn. Note that the node in question is a <i>problematic</i> node
+                        that is the root of a subtree with insufficient black height. Initially, this is the deleted node, but, like insert, the 
+                        problem may roll up the tree so that the problematic node is not the one being deleted. 
+                    </Text>
+
+                    <Image
+                        src="/delete.png"
+                        width={425}
+                        height={425}
+                        alt="A flow chart showing the logic to delete from a Red-Black Tree"
+                    />
+
+                    <Divider my="md" style={{width:'50%'}} color='white'/>
+
+                    <Title order={3}>Sibling is red</Title>
+                        <Text style={{width: 450}}>
+                            When the sibling of the problematic node is red, we have no recourse but to manipulate the situation so that the
+                            sibling is black. We do this by a rotation around the parent that moves the problematic node downwards. For more 
+                            explanation on how rotations are done refer to the insert section. After the rotation, recolor the node that rotated
+                            down red and the node the got rotated up black. Once all rotating and recoloring is done, the problem will be reduced
+                            to another case that we will be able to deal with more directly. 
+                        </Text>
+
+                        <Image
+                            src="/delete_red_sibling.gif"
+                            unoptimized
+                            width={425}
+                            height={425}
+                            alt="A GIF showing a delete when the sibling is red"
+                        />
+
+                    <Divider my="md" style={{width:'50%'}} color='white'/>
+
+                    <Title order={3}>Sibling is black with a red child</Title>
+                        <Text style={{width: 450}}>
+                            This case is quite similar to insert with the parent's sibling being black. We need to rotate
+                            to resolve the <span style={{color : "white"}}>LACK OF BLACK</span>. We need to do a setup rotation to get 
+                            the red child on the outside if initially there is only a red child on the inside. After the setup rotation the red does need
+                            to get "passed through" like in the red sibling case. When the final rotation is done, we need to ensure that the
+                            root of the rotated subtree is the same color as it was before, and that its children are both black. The worst case scenario is 
+                            demonstrated below, note the similarities to the insertion case. 
+                        </Text>
+
+                        <Image
+                            src="/delete_black_sibling_w_red_child.gif"
+                            unoptimized
+                            width={425}
+                            height={425}
+                            alt="A GIF showing a delete when the sibling is black with a red child"
+                        />
+
+                    <Divider my="md" style={{width:'50%'}} color='white'/>
+
+                    <Title order={3}>Sibling is black with no red child</Title>
+                        <Text style={{width: 450}}>
+                            This case is reminiscent of the insert case where the parent's sibling is red in that it is a recoloring
+                            with the potential for the issue, whether <span style={{color : "white"}}>LACK OF BLACK</span> or <span style={{color : "red"}}>RED ALERT</span>{", "}
+                            to propogate upwards. No matter what, we color the sibling red. Then, if the parent is red, we can color it black and
+                            be done. Otherwise, the parent becomes the problematic node since its black height is too small. However, similar to insert, we have made progress, since
+                            the problem now occurs higher up in the tree. Keep in mind that the root cannot have insufficient black height, since it does need to match any subtrees. 
+                            Since there are only <code>O(logn)</code> levels, the time complexity of delete is still <code>O(logn)</code>.
+                        </Text>
+
+                        <Image
+                            src="/delete_black_sibling_red_parent.gif"
+                            unoptimized
+                            width={425}
+                            height={425}
+                            alt="A GIF showing a delete when the parent is red and the sibling is black without a red child"
+                        />
+
+                        <Image
+                            src="/delete_black_sibling_black_parent.gif"
+                            unoptimized
+                            width={425}
+                            height={425}
+                            alt="A GIF showing a delete when the parent is black and the sibling is black without a red child"
+                        />
+                        
             </Stack>
         </>
     )
