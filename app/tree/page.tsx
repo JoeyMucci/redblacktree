@@ -230,7 +230,7 @@ export default function Tree() {
     // node be inserted where tapped and then call insert
     const insertWrapper = (n : Node, isLeft: boolean) : void => {
         if(!n.parent) {
-            insert(root, Math.floor((MIN + MAX) / 2))
+            insert(root, (MIN + MAX) / 2);
         }
         else {
             let maxi : number, mini : number;
@@ -242,7 +242,7 @@ export default function Tree() {
                 mini = n.parent.value;
                 maxi = inOrderSuccessor(mini);
             }
-            insert(root, Math.floor((mini + maxi) / 2))
+            insert(root, (mini + maxi) / 2);
         }
     }
 
@@ -359,13 +359,13 @@ export default function Tree() {
             {tree.map((nList : Node[], i : number) => { 
                 return (
                         <Center key={i}>
-                            <Group gap={gapmap[i]}>
+                            <Group gap={gapmap[i]} wrap="nowrap">
                                 {nList.map((n : Node, j : number) => { 
                                     // REGULAR NODE
                                     if(n.value > MIN && n.value < MAX) {
                                         return (
-                                            <Button key={j} color={n.isRed ? "red" : "black"} size="compact-xs" onClick={() => remove(root, n.value)}>
-                                                {n.value}
+                                            <Button key={j} color={n.isRed ? "red" : "black"} onClick={() => remove(root, n.value)}>
+                                                {Math.floor(n.value * 100) / 100}
                                             </Button>
                                         )
                                     }
@@ -373,7 +373,7 @@ export default function Tree() {
                                     // ADD NODE
                                     if(isNullNode(n)) {
                                         return (
-                                            <Button key={j} color="gray" size="compact-xs" onClick={() => insertWrapper(n, j % 2 === 0)}>
+                                            <Button key={j} color="gray" onClick={() => insertWrapper(n, j % 2 === 0)}>
                                                 Add
                                             </Button>
                                         )
@@ -381,7 +381,7 @@ export default function Tree() {
 
                                     // PLACEHOLDER NODE
                                     return (
-                                        <Button key={j} style={{visibility: 'hidden'}} size="compact-xs">
+                                        <Button key={j} style={{visibility: 'hidden'}} >
                                             Add
                                         </Button>
                                     )
