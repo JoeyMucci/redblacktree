@@ -4,6 +4,7 @@ import Image from 'next/image'
 import { useScrollIntoView } from '@mantine/hooks';
 import { Group, Button, Title, Stack, Text, Accordion, List, Collapse, Divider } from '@mantine/core'
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 interface Rule {
     title: string
@@ -89,9 +90,9 @@ const bstQA : CompCheck[] = [
 ]
 
 export default function Learn() {
+    const router = useRouter();
     const { scrollIntoView, targetRef } = useScrollIntoView<HTMLDivElement>();
     const [showbstQ, setShowbstQ] = useState<boolean[]>(new Array(bstQA.length).fill(true));
-
 
     const scrollButton = (newRef : HTMLDivElement) : void => {
         targetRef.current = newRef;
@@ -500,6 +501,14 @@ export default function Learn() {
                             Since there are only <code>O(logn)</code> levels, the time complexity of delete is still <code>O(logn)</code>.
                         </Text>
 
+                        <Text style={{width: 450}}>
+                            In the following tree, the black heights of the node are included. This is because it is helpful to consider the nodes as the
+                            root of a subtree. If a node's subtree has a smaller black height than its sibling, than clearly it has a <span style={{color : "white"}}>LACK OF BLACK</span>{", "}
+                            and we must go through the protocol to resolve it. As mentioned above, when the parent is red, we can resolve all issues with a simple recoloring
+                            of the sibling to red and the parent to black.
+                        </Text>
+
+
                         <Image
                             src="/delete_black_sibling_red_parent.gif"
                             unoptimized
@@ -508,6 +517,11 @@ export default function Learn() {
                             alt="A GIF showing a delete when the parent is red and the sibling is black without a red child"
                         />
 
+                        <Text style={{width: 450}}>
+                            However, in the case where the parent is black, the <span style={{color : "white"}}>LACK OF BLACK</span> persists at a higher level in the tree
+                            and must be resolved according to whichever case now applies. 
+                        </Text>
+                        
                         <Image
                             src="/delete_black_sibling_black_parent.gif"
                             unoptimized
@@ -515,7 +529,22 @@ export default function Learn() {
                             height={425}
                             alt="A GIF showing a delete when the parent is black and the sibling is black without a red child"
                         />
-                        
+
+                        <Divider my="md" style={{width:'50%'}} color='white'/>
+
+                        <Text style={{width: 450}}>
+                            And that is all you need to know about how Red-Black Trees operate! There is a lot to remember, which is why I recommend
+                            trying it out for yourself by clicking the button below. You can build your own Red-Black Trees, and get detailed explanations
+                            about each addition and deletion as it happens. The explanations follow the terminology here, so having gone through this page should be
+                            helpful in understanding what's going on. And even if you just skipped to the end, trying something out for yourself is still a great way to learn!
+                        </Text>
+
+                        <Button onClick={() => router.push('/tree')}>
+                            Try It Yourself!
+                        </Button>
+
+                        <br/>
+                        <br/>
             </Stack>
         </>
     )

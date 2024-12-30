@@ -364,7 +364,7 @@ export default function Tree() {
                                     // REGULAR NODE
                                     if(n.value > MIN && n.value < MAX) {
                                         return (
-                                            <Button key={j} color={n.isRed ? "red" : "black"} size="compact-xs" onClick={() => remove(root, n.value)}>
+                                            <Button key={j} color={n.isRed ? "red" : "black"} onClick={() => remove(root, n.value)}>
                                                 {Math.floor(n.value * 100) / 100}
                                             </Button>
                                         )
@@ -373,7 +373,7 @@ export default function Tree() {
                                     // ADD NODE
                                     if(isNullNode(n)) {
                                         return (
-                                            <Button key={j} color="gray" size="compact-xs" onClick={() => insertWrapper(n, j % 2 === 0)}>
+                                            <Button key={j} color="gray" onClick={() => insertWrapper(n, j % 2 === 0)}>
                                                 Add
                                             </Button>
                                         )
@@ -381,7 +381,7 @@ export default function Tree() {
 
                                     // PLACEHOLDER NODE
                                     return (
-                                        <Button key={j} style={{visibility: 'hidden'}} size="compact-xs">
+                                        <Button key={j} style={{visibility: 'hidden'}} >
                                             Add
                                         </Button>
                                     )

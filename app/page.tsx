@@ -1,11 +1,14 @@
-import { ColorSchemeToggle } from '../components/ColorSchemeToggle/ColorSchemeToggle';
-import { Welcome } from '../components/Welcome/Welcome';
+import Image from 'next/image'
 
 export default function HomePage() {
   return (
     <>
-      <Welcome />
-      <ColorSchemeToggle />
+      <Image
+          src="/favicon.png"
+          width={425}
+          height={425}
+          alt="A GIF showing a delete when the sibling is red"
+      />
     </>
   );
 }
