@@ -1,7 +1,6 @@
 'use client';
 
-import { Button, Center, Group, Stack } from '@mantine/core';
-import { useViewportSize } from '@mantine/hooks';
+import { Button, Group, Stack } from '@mantine/core';
 import { useState } from 'react';
 
 interface Node {
@@ -23,12 +22,6 @@ const isNullNode = (n : Node) : boolean => { return n.value === MIN }
 
 const isRoot = (n : Node) : boolean => { return !n.parent }
 
-const makePlaceholderNode = () : Node => {
-    return {value: MAX, isRed: false, left: null, right: null, parent: null};
-}
-
-const MAXLEVELS = 6;
-const BUTTONSIZE = 40;
 let root : Node = makeNullNode(null);
 
 const isLeftChild = (n : Node) : boolean => { return !isRoot(n) && n.value === n.parent!.left!.value }
@@ -196,15 +189,7 @@ const handleLackOfBlack = (baseBlack : Node, siblingLeft: boolean) : void => {
 }
 
 export default function Tree() {
-    const [tree, setTree] = useState<Node[][]>([[root]]); 
-    const { width } = useViewportSize();
-    const gapmap : number[] = [];
-
-    for(let i = 0; i < MAXLEVELS; i++) {
-        const buttons = 2 ** i;
-        const whiteSpace = width - BUTTONSIZE * buttons;
-        gapmap.push(whiteSpace / (buttons) + 1);
-    }
+    const [rerenders, setRerenders] = useState<number>(0); 
 
     const insert = (current: Node, val: number) : void => {
         if(val <= MIN || val >= MAX || val === current.value) {
@@ -216,7 +201,7 @@ export default function Tree() {
             current.left = makeNullNode(current);
             current.right = makeNullNode(current);
             handleRedAlert(current);
-            setTree(levelOrder(root));
+            setRerenders((prev) => prev + 1);
         }
         else if(val < current.value) {
             insert(current.left!, val);
@@ -286,7 +271,7 @@ export default function Tree() {
             }
 
             if(!skipUpdate) {
-                setTree(levelOrder(root));
+                setRerenders((prev) => prev + 1);
             }
             
         }
@@ -319,78 +304,33 @@ export default function Tree() {
         return (index === -1 || index === io.length - 1) ? MAX : io[index + 1].value;
     }
 
-    const levelOrder = (n : Node) : Node[][] => {
-        const ans : Node[][] = [];
-
-        const q : [Node, number][] = [];
-
-        let nodesAdded = 0;
-
-        q.unshift([n, 0]);
-
-        while(nodesAdded < 2 ** MAXLEVELS - 1) {
-            const popped : [Node, number] = q[q.length - 1];
-            q.pop()
-            const pNode : Node = popped[0];
-            const pRank : number = popped[1];
-
-            if(pNode.left !== null && pNode.right !== null) {
-                q.unshift([pNode.left, pRank + 1]);
-                q.unshift([pNode.right, pRank + 1]);
-            }
-            else {
-                q.unshift([makePlaceholderNode(), pRank + 1])
-                q.unshift([makePlaceholderNode(), pRank + 1])
-            }
-
-            if(ans.length === pRank) {
-                ans.push([]);
-            }
-            ans[pRank].push(pNode); 
-            nodesAdded++;
+    const drawTree = (n : Node | null) : JSX.Element => {
+        if(n === null) {
+            return (
+                <></>
+            )
         }
-
-        return ans;
+        return (
+            <Stack align="center" justify="flex-start">
+                {n.value === MIN ? (
+                    <Button color="black" onClick={() => insertWrapper(n, isLeftChild(n))}>
+                        Null
+                    </Button>
+                ) : (
+                    <Button color={n.isRed ? "red" : "black"} onClick={() => remove(root, n.value)}>
+                        {Math.floor(n.value * 100) / 100}
+                    </Button>
+                )}
+                
+                <Group wrap="nowrap" align="flex-start">
+                    {drawTree(n.left)}
+                    {drawTree(n.right)}
+                </Group>
+            </Stack>
+        )
     }
 
     return (
-        <Center>
-            <Stack>
-            {tree.map((nList : Node[], i : number) => { 
-                return (
-                        <Center key={i}>
-                            <Group gap={gapmap[i]} wrap="nowrap">
-                                {nList.map((n : Node, j : number) => { 
-                                    // REGULAR NODE
-                                    if(n.value > MIN && n.value < MAX) {
-                                        return (
-                                            <Button key={j} color={n.isRed ? "red" : "black"} onClick={() => remove(root, n.value)}>
-                                                {Math.floor(n.value * 100) / 100}
-                                            </Button>
-                                        )
-                                    }
-
-                                    // ADD NODE
-                                    if(isNullNode(n)) {
-                                        return (
-                                            <Button key={j} color="gray" onClick={() => insertWrapper(n, j % 2 === 0)}>
-                                                Add
-                                            </Button>
-                                        )
-                                    }
-
-                                    // PLACEHOLDER NODE
-                                    return (
-                                        <Button key={j} style={{visibility: 'hidden'}} >
-                                            Add
-                                        </Button>
-                                    )
-                                })}
-                            </Group>
-                        </Center>
-                )
-            })}
-            </Stack>
-        </Center>
+        drawTree(root)
     )
 }
