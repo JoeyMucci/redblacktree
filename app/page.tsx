@@ -52,6 +52,25 @@ export default function HomePage() {
                 </Text>
               </Group>
             </Center>
+
+            <br />
+            <br />
+
+            <Center>
+              <Group gap="6px">
+                <Text component ="span">
+                  Check out the 
+                </Text>
+
+                <Link href="https://www.cs.usfca.edu/~galles/visualization/RedBlack.html">
+                  inspiration
+                </Link>
+
+                <Text component ="span">
+                  for this project
+                </Text>
+              </Group>
+            </Center>
           </Stack>
       </Center>
     </>

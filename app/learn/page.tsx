@@ -328,7 +328,7 @@ export default function Learn() {
                     <Text style={{width: 450}}>
                         When we insert a node, we always let it be red to start. If its parent is black, we have not violated
                         any properties and we are done (yipee). However, if we insert a red node and its parent is red, we have just 
-                        caused violated the Double Red Property, triggering what I like to call a <span style={{color : "red"}}>RED ALERT</span>.
+                        violated the Double Red Property, triggering what I like to call a <span style={{color : "red"}}>RED ALERT</span>.
                     </Text>
 
                     <Text style={{width: 450}}>

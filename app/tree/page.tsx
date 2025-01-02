@@ -1,6 +1,7 @@
 'use client';
 
-import { Button, Group, Stack } from '@mantine/core';
+import { useDisclosure } from '@mantine/hooks';
+import { Button, Divider, Group, NumberInput, Stack, Switch, Modal, Text } from '@mantine/core';
 import { useState } from 'react';
 
 interface Node {
@@ -65,60 +66,6 @@ const leftRotate = (newRoot : Node) : void => {
 }
 
 
-const handleRedAlert = (baseRed: Node) : void => {
-    // Root is red => make it black
-    if(isRoot(baseRed)) {
-        baseRed.isRed = false;
-        return;
-    }
-
-    // Stop if parent is not red (i.e. there is no double red)
-    if(!baseRed.parent!.isRed) {
-        return;
-    }
-
-    // Grandpa must exist since parent is red and all reds have parents
-    const grandpa : Node = baseRed.parent!.parent!;
-    const firstRedLeft : boolean = isLeftChild(baseRed.parent!);
-    const uncle : Node = firstRedLeft ? grandpa.right! : grandpa.left!;
-
-    // CASE 1: Red Uncle => Recolor parents, grandpa and move issue upwards
-    if(uncle.isRed) {
-        grandpa.isRed = true;
-        uncle.isRed = false;
-        baseRed.parent!.isRed = false;
-        handleRedAlert(grandpa);
-    }
-
-    // CASE 2: Black Uncle => Rotate and make newRoot black, children of newRoot red
-    else {
-        const secondRedLeft: boolean = isLeftChild(baseRed);
-
-        // Setup Rotation
-        if(firstRedLeft !== secondRedLeft) {
-            const nextDoubleRed : Node = baseRed.parent!;
-            if(firstRedLeft) {
-                leftRotate(baseRed);
-            }
-            else {
-                rightRotate(baseRed);
-            }
-            handleRedAlert(nextDoubleRed);
-        }
-
-        // Single Rotation
-        else {
-            if(firstRedLeft) {
-                rightRotate(baseRed.parent!);
-            }
-            else {
-                leftRotate(baseRed.parent!);
-            }
-            baseRed.parent!.isRed = false;
-            grandpa.isRed = true;
-        }  
-    }
-}
 
 const handleLackOfBlack = (baseBlack : Node, siblingLeft: boolean) : void => {
     // Root cannot have a lack of black
@@ -189,7 +136,161 @@ const handleLackOfBlack = (baseBlack : Node, siblingLeft: boolean) : void => {
 }
 
 export default function Tree() {
-    const [rerenders, setRerenders] = useState<number>(0); 
+    const [, setRerenders] = useState<number>(0);
+    const [showAlerts, setShowAlerts] = useState<boolean>(true);
+    const [showValues, setShowValues] = useState<boolean>(true); 
+    const [showNulls, setShowNulls] = useState<boolean>(true);
+    const [insertVal, setInsertVal] = useState<string | number>('');
+    const [deleteVal, setDeleteVal] = useState<string | number>('');
+    const [modalTitle, setModalTitle] = useState<string>('');
+    const [modalMessage, setModalMessage] = useState<string>('');
+    const [opened, { open, close }] = useDisclosure(false);
+
+    const [cleanupAction, setCleanupAction] = useState<string>('NOTHING');
+    const [saveNode, setSaveNode] = useState<Node>(makeNullNode(null));
+
+
+    const handleClose = () : void => {
+        close();
+        doCleanupAction(cleanupAction, saveNode);
+        setRerenders((prev) => prev + 1);
+    }
+
+    const doCleanupAction = (cleanAct : string, saveN : Node) : void => {
+        if(cleanAct === 'TURN_ROOT_BLACK') {
+            root.isRed = false;
+        }
+        else if(cleanAct === 'RECOLOR_RED_CHILDREN_BLACK_RECHECK') {
+            saveN.isRed = true;
+            saveN.left!.isRed = false;
+            saveN.right!.isRed = false;
+            handleRedAlert(saveN);
+        }
+        else if(cleanAct === 'SIMPLE_SETUP_ROTATION_LEFT') {
+            leftRotate(saveN);
+            handleRedAlert(saveN.left!);
+        }
+        else if(cleanAct === 'SIMPLE_SETUP_ROTATION_RIGHT') {
+            rightRotate(saveN);
+            handleRedAlert(saveN.right!);
+        }
+        else if(cleanAct === 'ROTATION_RIGHT_RED_CHILDREN') {
+            rightRotate(saveN);
+            saveN.right!.isRed = true;
+            saveN.isRed = false;
+        }
+        else if(cleanAct === 'ROTATION_LEFT_RED_CHILDREN') {
+            leftRotate(saveN);
+            saveN.left!.isRed = true;
+            saveN.isRed = false;
+        }
+    }
+
+    const setupBreakpoint =  (msg : string, cleanAct: string, saveN : Node) : void => {
+        if(showAlerts) {
+            if(cleanAct === 'RECOLOR_RED_CHILDREN_BLACK_RECHECK' ||
+                cleanAct === 'SIMPLE_SETUP_ROTATION_LEFT' ||
+                cleanAct === 'SIMPLE_SETUP_ROTATION_RIGHT' ||
+                cleanAct === 'ROTATION_RIGHT_RED_CHILDREN' ||
+                cleanAct === 'ROTATION_LEFT_RED_CHILDREN'
+            ) {
+                setModalTitle("RED ALERT");
+            }
+            else {
+                setModalTitle("Placeholder");
+            }
+            setModalMessage(msg);
+            open();
+            setCleanupAction(cleanAct);
+            setSaveNode(saveN);
+        } 
+        else {
+            doCleanupAction(cleanAct, saveN);
+        }
+    }
+
+    const handleRedAlert =  (baseRed: Node) : void => {
+        // Root is red => make it black
+        if(isRoot(baseRed)) {
+            setupBreakpoint(
+                `The new red node (${baseRed.value}) is the root, we turn it back to black since the root is always black`,
+                'TURN_ROOT_BLACK',
+                makeNullNode(null)
+            );
+            return;
+        }
+    
+        // Stop if parent is not red (i.e. there is no double red)
+        if(!baseRed.parent!.isRed) {
+            setupBreakpoint(
+                `The new red node (${baseRed.value}) has a black parent (${baseRed.parent!.value}), no action is required`,
+                'NOTHING',
+                makeNullNode(null)
+            );
+            return;
+        }
+    
+        // Grandpa must exist since parent is red and all reds have parents
+        const grandpa : Node = baseRed.parent!.parent!;
+        const firstRedLeft : boolean = isLeftChild(baseRed.parent!);
+        const uncle : Node = firstRedLeft ? grandpa.right! : grandpa.left!;
+    
+        // CASE 1: Red Uncle => Recolor parents, grandpa and move issue upwards
+        if(uncle.isRed) {
+            setSaveNode(grandpa);
+            setupBreakpoint(
+                `The new red node (${baseRed.value}) has a red parent (${baseRed.parent!.value}) with a red sibling (${uncle.value}), 
+                    recolor the parent and its sibling black. Also, recolor the grandparent (${grandpa.value}) red and check for another RED ALERT`,
+                'RECOLOR_RED_CHILDREN_BLACK_RECHECK',
+                grandpa
+            );
+        }
+    
+        // CASE 2: Black Uncle => Rotate and make newRoot black, children of newRoot red
+        else {
+            const secondRedLeft: boolean = isLeftChild(baseRed);
+    
+            // Double red on the inside => Setup Rotation
+            if(firstRedLeft !== secondRedLeft) {
+                if(firstRedLeft) {
+                    setupBreakpoint(
+                        `The new red node (${baseRed.value}) has a red parent (${baseRed.parent!.value}) with a black sibling (${uncle.value > 0 ? uncle.value : "Null"}).  
+                        Since the second red is on the inside, we rotate it to the outside with a left rotation and then apply the outside case.`,
+                        'SIMPLE_SETUP_ROTATION_LEFT',
+                        baseRed
+                    );
+                }
+                else {
+                    setupBreakpoint(
+                        `The new red node (${baseRed.value}) has a red parent (${baseRed.parent!.value}) with a black sibling (${uncle.value > 0 ? uncle.value : "Null"}).  
+                        Since the second red is on the inside, we rotate it to the outside with a right rotation and then apply the outside case.`,
+                        'SIMPLE_SETUP_ROTATION_RIGHT',
+                        baseRed
+                    );
+                }
+            }
+    
+            // Double red on the outside => Single Rotation
+            else if(firstRedLeft) {
+                    setupBreakpoint(
+                        `The new red node (${baseRed.value}) has a red parent (${baseRed.parent!.value}) with a black sibling (${uncle.value > 0 ? uncle.value : "Null"}).  
+                        Since the second red is on the outside, we rotate the red chain up with a right rotation. The node going up a level (${baseRed.parent!.value}) turns from red to black and the node going down a level 
+                        (${grandpa.value}) turns from black to red.`,
+                        'ROTATION_RIGHT_RED_CHILDREN',
+                        baseRed.parent!
+                    );
+                }
+            else {
+                setupBreakpoint(
+                    `The new red node (${baseRed.value}) has a red parent (${baseRed.parent!.value}) with a black sibling (${uncle.value > 0 ? uncle.value : "Null"}).  
+                    Since the second red is on the outside, we rotate the red chain up with a left rotation. The node going up a level (${baseRed.parent!.value}) turns from red to black and the node going down a level 
+                    (${grandpa.value}) turns from black to red.`,
+                    'ROTATION_LEFT_RED_CHILDREN',
+                    baseRed.parent!
+                );
+            }
+        }  
+    }
 
     const insert = (current: Node, val: number) : void => {
         if(val <= MIN || val >= MAX || val === current.value) {
@@ -201,7 +302,9 @@ export default function Tree() {
             current.left = makeNullNode(current);
             current.right = makeNullNode(current);
             handleRedAlert(current);
-            setRerenders((prev) => prev + 1);
+            if(!showAlerts) {
+                setRerenders((prev) => prev + 1);
+            }   
         }
         else if(val < current.value) {
             insert(current.left!, val);
@@ -214,26 +317,26 @@ export default function Tree() {
     // This method's job is to find a value that will make the 
     // node be inserted where tapped and then call insert
     const insertWrapper = (n : Node, isLeft: boolean) : void => {
-        if(!n.parent) {
-            insert(root, (MIN + MAX) / 2);
+        if(isRoot(n)) {
+            insert(root, Math.floor((MIN + MAX) / 2));
         }
         else {
             let maxi : number, mini : number;
             if(isLeft) {
-                maxi = n.parent.value;
+                maxi = n.parent!.value;
                 mini = inOrderPredecessor(maxi);
             }
             else {
-                mini = n.parent.value;
+                mini = n.parent!.value;
                 maxi = inOrderSuccessor(mini);
             }
-            insert(root, (mini + maxi) / 2);
+            insert(root, Math.floor((mini + maxi) / 2));
         }
     }
 
     const remove = (current: Node, val: number) : void => {
-        if(val <= MIN || val >= MAX) {
-            // ERROR HANDLING
+        if(val <= MIN || val >= MAX || !current) {
+            // ERROR HANDLING - Trying to delete a value that does not exist
         }
         else if(current.value === val) {
             const hasLeftChild : boolean = !isNullNode(current.left!);
@@ -304,33 +407,102 @@ export default function Tree() {
         return (index === -1 || index === io.length - 1) ? MAX : io[index + 1].value;
     }
 
-    const drawTree = (n : Node | null) : JSX.Element => {
+    const drawTree = (n : Node | null, left : boolean) : JSX.Element => {
         if(n === null) {
             return (
                 <></>
             )
         }
         return (
-            <Stack align="center" justify="flex-start">
-                {n.value === MIN ? (
-                    <Button color="black" onClick={() => insertWrapper(n, isLeftChild(n))}>
-                        Null
-                    </Button>
+            <Stack align="center">
+                {isNullNode(n) ? (
+                    showNulls && (
+                        showValues ? 
+                            <Button color="black" radius="xl" size="compact-md" onClick={() => insertWrapper(n, left)}>
+                                Null
+                            </Button>
+                        :
+                            <Button color="black" radius="xl" onClick={() => insertWrapper(n, left)} /> 
+                    )
                 ) : (
-                    <Button color={n.isRed ? "red" : "black"} onClick={() => remove(root, n.value)}>
-                        {Math.floor(n.value * 100) / 100}
-                    </Button>
+                    showValues ? 
+                        <Button color={n.isRed ? "red" : "black"} radius="xl" size="compact-md" onClick={() => remove(root, n.value)}>
+                            {Math.floor(n.value * 100) / 100}
+                        </Button>
+                    :
+                        <Button color={n.isRed ? "red" : "black"} radius="xl" onClick={() => remove(root, n.value)} /> 
                 )}
                 
-                <Group wrap="nowrap" align="flex-start">
-                    {drawTree(n.left)}
-                    {drawTree(n.right)}
+                <Group wrap="nowrap" style={{overflowAnchor: "auto"}} align="flex-start">
+                    {drawTree(n.left, true)}
+                    {drawTree(n.right, false)}
                 </Group>
             </Stack>
         )
     }
 
     return (
-        drawTree(root)
+        <>
+            <Text size="xl" ta="center">
+                You can insert by clicking on null nodes and delete by clicking on non-null nodes
+            </Text>
+            <Group style={{ margin: "10px"}} justify="center">
+                <Stack style={{ width : "100px"}}>
+                    <NumberInput 
+                        radius="xl"
+                        allowDecimal={false}
+                        min={MIN + 1}
+                        max={MAX - 1}
+                        value={insertVal}
+                        onChange={setInsertVal}
+                    />
+                    <Button radius="xl" disabled={insertVal === ""} onClick={() => {insert(root, insertVal as number); setInsertVal("")}}>
+                        Insert
+                    </Button>
+                </Stack>
+
+                <Stack style={{ width : "100px"}}>
+                    <NumberInput 
+                        radius="xl"
+                        allowDecimal={false}
+                        min={MIN + 1}
+                        max={MAX - 1}
+                        value={deleteVal}
+                        onChange={setDeleteVal}
+                    />
+                    <Button radius="xl" disabled={deleteVal === ""} onClick={() => {remove(root, deleteVal as number); setDeleteVal("")}}>
+                        Delete
+                    </Button>
+                </Stack>
+
+                <Stack>
+                    <Switch
+                        checked={showAlerts}
+                        onChange={(event) => setShowAlerts(event.currentTarget.checked)}
+                        label="Explanation"
+                        labelPosition="right"
+                    />
+
+                    <Switch
+                        checked={showValues}
+                        onChange={(event) => setShowValues(event.currentTarget.checked)}
+                        label="Show Values"
+                        labelPosition="right"
+                    />
+
+                    <Switch
+                        checked={showNulls}
+                        onChange={(event) => setShowNulls(event.currentTarget.checked)}
+                        label="Show Nulls"
+                        labelPosition="right"
+                    />
+                </Stack>
+            </Group>
+            <Divider my="md" style={{width:'100%'}} color='white'/>
+            {drawTree(root, false)} 
+            <Modal opened={opened} onClose={handleClose} title={modalTitle}>
+                {modalMessage}
+            </Modal>
+        </>
     )
 }
