@@ -2,6 +2,7 @@
 
 import { useDisclosure } from '@mantine/hooks';
 import { Button, Divider, Group, NumberInput, Stack, Switch, Modal, Text } from '@mantine/core';
+import { notifications } from '@mantine/notifications';
 import { useState } from 'react';
 
 interface Node {
@@ -188,17 +189,7 @@ export default function Tree() {
 
     const setupBreakpoint =  (msg : string, cleanAct: string, saveN : Node) : void => {
         if(showAlerts) {
-            if(cleanAct === 'RECOLOR_RED_CHILDREN_BLACK_RECHECK' ||
-                cleanAct === 'SIMPLE_SETUP_ROTATION_LEFT' ||
-                cleanAct === 'SIMPLE_SETUP_ROTATION_RIGHT' ||
-                cleanAct === 'ROTATION_RIGHT_RED_CHILDREN' ||
-                cleanAct === 'ROTATION_LEFT_RED_CHILDREN'
-            ) {
-                setModalTitle("RED ALERT");
-            }
-            else {
-                setModalTitle("Placeholder");
-            }
+            setModalTitle(cleanAct);
             setModalMessage(msg);
             open();
             setCleanupAction(cleanAct);
@@ -293,8 +284,19 @@ export default function Tree() {
     }
 
     const insert = (current: Node, val: number) : void => {
-        if(val <= MIN || val >= MAX || val === current.value) {
-            // ERROR HANDLING
+        if(val <= MIN || val >= MAX) {
+            notifications.show({
+                title: 'Invalid Value for Insert',
+                color: 'red',
+                message: `The integer value must be in the range ${MIN + 1}-${MAX - 1} inclusive.`,
+            });
+        }
+        else if(val === current.value) {
+            notifications.show({
+                title: 'Invalid Value for Insert',
+                color: 'red',
+                message: `The value ${val} is already in the tree.`,
+            });
         }
         else if(isNullNode(current)) {
             current.value = val;
@@ -335,8 +337,12 @@ export default function Tree() {
     }
 
     const remove = (current: Node, val: number) : void => {
-        if(val <= MIN || val >= MAX || !current) {
-            // ERROR HANDLING - Trying to delete a value that does not exist
+        if(!current) {
+            notifications.show({
+                title: 'Invalid Value for Delete',
+                color: 'red',
+                message: `The value ${val} is not in the tree.`,
+            });
         }
         else if(current.value === val) {
             const hasLeftChild : boolean = !isNullNode(current.left!);

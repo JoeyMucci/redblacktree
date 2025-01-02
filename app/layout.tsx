@@ -3,6 +3,7 @@ import '@mantine/core/styles.css';
 import React from 'react';
 import { ColorSchemeScript, mantineHtmlProps, MantineProvider, createTheme } from '@mantine/core';
 import { Header } from '@/components/Header/Header';
+import { Notifications } from '@mantine/notifications';
 
 export const metadata = {
   title: 'Red-Black Tree Lesson',
@@ -27,6 +28,7 @@ export default function RootLayout({ children }: { children: any }) {
       </head>
       <body>
         <MantineProvider theme={myTheme} forceColorScheme="dark">
+          <Notifications />
           <Header />
           {children}
         </MantineProvider>
