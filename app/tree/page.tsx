@@ -11,6 +11,7 @@ interface Node {
     left: Node | null
     right: Node | null
     parent: Node | null
+    highlighted? : boolean
 }
 
 const MIN = 0;
@@ -68,74 +69,6 @@ const leftRotate = (newRoot : Node) : void => {
 
 
 
-const handleLackOfBlack = (baseBlack : Node, siblingLeft: boolean) : void => {
-    // Root cannot have a lack of black
-    if(isRoot(baseBlack)) {
-        return;
-    }
-
-    const sibling : Node = siblingLeft ? baseBlack.parent!.left! : baseBlack.parent!.right!;
-
-    // CASE 1: Red Sibling => Setup rotation to get black sibling
-    if(sibling.isRed) {
-        if(siblingLeft) {
-            rightRotate(sibling);
-        }
-        else {
-            leftRotate(sibling);
-        }
-        sibling.isRed = false;
-        baseBlack.parent!.isRed = true;
-        handleLackOfBlack(baseBlack, siblingLeft);
-    }
-
-    // CASE 2: Black Sibling 
-    else {
-        const rootIsRed : boolean = baseBlack.parent!.isRed;
-
-        // First try to find a red child of sibling to rotate
-        // One and done rotation (sibling and red are in same direction)
-        if(siblingLeft ? sibling.left!.isRed : sibling.right!.isRed) {
-            if(siblingLeft) {
-                rightRotate(sibling);
-            }
-            else {
-                leftRotate(sibling);
-            }
-
-            sibling.left!.isRed = false;
-            sibling.right!.isRed = false;
-            sibling.isRed = rootIsRed;
-        }
-
-        // Setup rotation (sibling and red are in different direction)
-        else if(siblingLeft ? sibling.right!.isRed : sibling.left!.isRed) {
-            if(siblingLeft) {
-                leftRotate(sibling.right!);
-            }
-            else {
-                rightRotate(sibling.left!);
-            }
-
-            sibling.isRed = true;
-            sibling.parent!.isRed = false;
-            handleLackOfBlack(baseBlack, siblingLeft);
-        }
-        
-        // There are no red children of sibling => recolor sibling 
-        // red and potentially move lack of black upwards
-        else {
-            sibling.isRed = true;
-            if(rootIsRed) {
-                baseBlack.parent!.isRed = false;
-            }
-            else {
-                handleLackOfBlack(baseBlack.parent!, !isLeftChild(baseBlack.parent!));
-            }
-        }
-    }
-}
-
 export default function Tree() {
     const [, setRerenders] = useState<number>(0);
     const [showAlerts, setShowAlerts] = useState<boolean>(true);
@@ -147,47 +80,97 @@ export default function Tree() {
     const [modalMessage, setModalMessage] = useState<string>('');
     const [opened, { open, close }] = useDisclosure(false);
 
-    const [cleanupAction, setCleanupAction] = useState<string>('NOTHING');
+    const [cleanupAction, setCleanupAction] = useState<string>('No Additional Action Required');
     const [saveNode, setSaveNode] = useState<Node>(makeNullNode(null));
+    const [highlightedNode, setHighlightedNode] = useState<Node>(makeNullNode(null));
+
+    const highlight = (n : Node) : void => {
+        n.highlighted = true;
+        setHighlightedNode(n);
+    }
+
+    const unhighlight = (n : Node) : void => {
+        n.highlighted = false;
+        setHighlightedNode(makeNullNode(null));
+    }
 
 
     const handleClose = () : void => {
         close();
-        doCleanupAction(cleanupAction, saveNode);
+        doCleanupAction(cleanupAction, saveNode, highlightedNode);
         setRerenders((prev) => prev + 1);
     }
 
-    const doCleanupAction = (cleanAct : string, saveN : Node) : void => {
-        if(cleanAct === 'TURN_ROOT_BLACK') {
+    const doCleanupAction = (cleanAct : string, saveN : Node, highN : Node) : void => {
+        if(cleanAct === 'Turn Root Black') {
             root.isRed = false;
         }
-        else if(cleanAct === 'RECOLOR_RED_CHILDREN_BLACK_RECHECK') {
+        else if(cleanAct === 'Red Alert - Recolor and Move Up') {
             saveN.isRed = true;
             saveN.left!.isRed = false;
             saveN.right!.isRed = false;
             handleRedAlert(saveN);
         }
-        else if(cleanAct === 'SIMPLE_SETUP_ROTATION_LEFT') {
+        else if(cleanAct === 'Red Alert - Left Rotate Red Pair to Outside') {
             leftRotate(saveN);
             handleRedAlert(saveN.left!);
         }
-        else if(cleanAct === 'SIMPLE_SETUP_ROTATION_RIGHT') {
+        else if(cleanAct === 'Red Alert - Right Rotate Red Pair to Outside') {
             rightRotate(saveN);
             handleRedAlert(saveN.right!);
         }
-        else if(cleanAct === 'ROTATION_RIGHT_RED_CHILDREN') {
-            rightRotate(saveN);
-            saveN.right!.isRed = true;
-            saveN.isRed = false;
+        else if(
+            cleanAct === 'Red Alert - Right Rotate and Swap Colors' || 
+            cleanAct === 'Lack of Black - Right Rotate and Swap Colors to Get Black Sibling' ||
+            cleanAct === 'Lack of Black - Right Rotate and Swap Colors to Get Outside Red') {
+                rightRotate(saveN);
+                saveN.right!.isRed = true;
+                saveN.isRed = false;
+                if(cleanAct === 'Lack of Black - Right Rotate and Swap Colors to Get Black Sibling') {
+                    handleLackOfBlack(saveN.right!.right!, true);
+                }
+                else if(cleanAct === 'Lack of Black - Right Rotate and Swap Colors to Get Outside Red') {
+                    handleLackOfBlack(saveN.parent!.left!, false)
+                }
         }
-        else if(cleanAct === 'ROTATION_LEFT_RED_CHILDREN') {
-            leftRotate(saveN);
-            saveN.left!.isRed = true;
-            saveN.isRed = false;
+        else if(
+            cleanAct === 'Red Alert - Left Rotate and Swap Colors' || 
+            cleanAct === 'Lack of Black - Left Rotate and Swap Colors to Get Black Sibling' || 
+            cleanAct === 'Lack of Black - Right Rotate and Swap Colors to Get Outside Red') {
+                leftRotate(saveN);
+                saveN.left!.isRed = true;
+                saveN.isRed = false;
+                if(cleanAct === 'Lack of Black - Left Rotate and Swap Colors to Get Black Sibling') {
+                    handleLackOfBlack(saveN.left!.left!, false);
+                }
+                else if(cleanAct === 'Lack of Black - Right Rotate and Swap Colors to Get Outside Red') {
+                    handleLackOfBlack(saveN.parent!.right!, true)
+                }
         }
+        else if(cleanAct === 'Lack of Black - Right Rotate and Color New Children Black' || cleanAct === 'Lack of Black - Left Rotate and Color New Children Black') {
+            const wasParentRed : boolean = saveN.parent!.isRed;
+            if(cleanAct === 'Lack of Black - Right Rotate and Color New Children Black') {
+                rightRotate(saveN);
+            }
+            else {
+                leftRotate(saveN);
+            }
+            saveN.isRed = wasParentRed;
+            saveN.left!.isRed = false;
+            saveN.right!.isRed = false;
+        }
+        else if(cleanAct === 'Lack of Black - Swap Colors of Parent and Sibling') {
+            saveN.isRed = true;
+            saveN.parent!.isRed = false;
+        }
+        else if(cleanAct === 'Lack of Black - Color Sibling Red and Move Up') {
+            saveN.isRed = true;
+            handleLackOfBlack(saveN.parent!, !isLeftChild(saveN.parent!));
+        }
+        unhighlight(highN);
     }
 
-    const setupBreakpoint =  (msg : string, cleanAct: string, saveN : Node) : void => {
+    const setupBreakpoint =  (msg : string, cleanAct: string, saveN : Node, highN : Node) : void => {
         if(showAlerts) {
             setModalTitle(cleanAct);
             setModalMessage(msg);
@@ -196,7 +179,7 @@ export default function Tree() {
             setSaveNode(saveN);
         } 
         else {
-            doCleanupAction(cleanAct, saveN);
+            doCleanupAction(cleanAct, saveN, highN);
         }
     }
 
@@ -204,9 +187,10 @@ export default function Tree() {
         // Root is red => make it black
         if(isRoot(baseRed)) {
             setupBreakpoint(
-                `The new red node (${baseRed.value}) is the root, we turn it back to black since the root is always black`,
-                'TURN_ROOT_BLACK',
-                makeNullNode(null)
+                `The new red node (${baseRed.value}) is the root, but the root must always be black.`,
+                'Turn Root Black',
+                makeNullNode(null),
+                makeNullNode(null),
             );
             return;
         }
@@ -214,9 +198,10 @@ export default function Tree() {
         // Stop if parent is not red (i.e. there is no double red)
         if(!baseRed.parent!.isRed) {
             setupBreakpoint(
-                `The new red node (${baseRed.value}) has a black parent (${baseRed.parent!.value}), no action is required`,
-                'NOTHING',
-                makeNullNode(null)
+                `The new red node (${baseRed.value}) has a black parent (${baseRed.parent!.value}), so there is no double red.`,
+                'No Additional Action Required',
+                makeNullNode(null),
+                makeNullNode(null),
             );
             return;
         }
@@ -230,10 +215,11 @@ export default function Tree() {
         if(uncle.isRed) {
             setSaveNode(grandpa);
             setupBreakpoint(
-                `The new red node (${baseRed.value}) has a red parent (${baseRed.parent!.value}) with a red sibling (${uncle.value}), 
-                    recolor the parent and its sibling black. Also, recolor the grandparent (${grandpa.value}) red and check for another RED ALERT`,
-                'RECOLOR_RED_CHILDREN_BLACK_RECHECK',
-                grandpa
+                `The new red node (${baseRed.value}) has a red parent (${baseRed.parent!.value}) with a red sibling (${uncle.value}). 
+                    Change colors of the parent, its sibling, and the grandparent (${grandpa.value}) before checking for another RED ALERT at the grandparent.`,
+                'Red Alert - Recolor and Move Up',
+                grandpa,
+                makeNullNode(null),
             );
         }
     
@@ -245,18 +231,20 @@ export default function Tree() {
             if(firstRedLeft !== secondRedLeft) {
                 if(firstRedLeft) {
                     setupBreakpoint(
-                        `The new red node (${baseRed.value}) has a red parent (${baseRed.parent!.value}) with a black sibling (${uncle.value > 0 ? uncle.value : "Null"}).  
-                        Since the second red is on the inside, we rotate the pair to the outside with a left rotation and then apply the outside case.`,
-                        'SIMPLE_SETUP_ROTATION_LEFT',
-                        baseRed
+                        `The new red node (${baseRed.value}) has a red parent (${baseRed.parent!.value}) with a black sibling (${uncle.value > 0 ? uncle.value : "Null"}).
+                        Since ${baseRed.value} is on the inside, we left rotate the pair to the outside to reach a simpler a case.`,
+                        'Red Alert - Left Rotate Red Pair to Outside',
+                        baseRed,
+                        makeNullNode(null),
                     );
                 }
                 else {
                     setupBreakpoint(
-                        `The new red node (${baseRed.value}) has a red parent (${baseRed.parent!.value}) with a black sibling (${uncle.value > 0 ? uncle.value : "Null"}).  
-                        Since the second red is on the inside, we rotate the pair to the outside with a right rotation and then apply the outside case.`,
-                        'SIMPLE_SETUP_ROTATION_RIGHT',
-                        baseRed
+                        `The new red node (${baseRed.value}) has a red parent (${baseRed.parent!.value}) with a black sibling (${uncle.value > 0 ? uncle.value : "Null"}).
+                        Since ${baseRed.value} is on the inside, we right rotate the pair to the outside to reach a simpler a case.`,
+                        'Red Alert - Right Rotate Red Pair to Outside',
+                        baseRed,
+                        makeNullNode(null),
                     );
                 }
             }
@@ -264,23 +252,127 @@ export default function Tree() {
             // Double red on the outside => Single Rotation
             else if(firstRedLeft) {
                     setupBreakpoint(
-                        `The new red node (${baseRed.value}) has a red parent (${baseRed.parent!.value}) with a black sibling (${uncle.value > 0 ? uncle.value : "Null"}).  
-                        Since the second red is on the outside, we rotate the red chain up with a right rotation. The node going up a level (${baseRed.parent!.value}) turns from red to black and the node going down a level 
-                        (${grandpa.value}) turns from black to red.`,
-                        'ROTATION_RIGHT_RED_CHILDREN',
-                        baseRed.parent!
+                        `The new red node (${baseRed.value}) has a red parent (${baseRed.parent!.value}) with a black sibling (${uncle.value > 0 ? uncle.value : "Null"}).
+                        Since ${baseRed.value} is on the outside, we right rotate the red chain up. Also swap colors of parent and grandparent (${grandpa.value}).`,
+                        'Red Alert - Right Rotate and Swap Colors',
+                        baseRed.parent!,
+                        makeNullNode(null),
                     );
                 }
             else {
                 setupBreakpoint(
-                    `The new red node (${baseRed.value}) has a red parent (${baseRed.parent!.value}) with a black sibling (${uncle.value > 0 ? uncle.value : "Null"}).  
-                    Since the second red is on the outside, we rotate the red chain up with a left rotation. The node going up a level (${baseRed.parent!.value}) turns from red to black and the node going down a level 
-                    (${grandpa.value}) turns from black to red.`,
-                    'ROTATION_LEFT_RED_CHILDREN',
-                    baseRed.parent!
+                    `The new red node (${baseRed.value}) has a red parent (${baseRed.parent!.value}) with a black sibling (${uncle.value > 0 ? uncle.value : "Null"}).
+                        Since ${baseRed.value} is on the outside, we left rotate the red chain up. Also swap colors of parent and grandparent (${grandpa.value}).`,
+                    'Red Alert - Left Rotate and Swap Colors',
+                    baseRed.parent!,
+                    makeNullNode(null),
                 );
             }
         }  
+    }
+
+    const handleLackOfBlack = (baseBlack : Node, siblingLeft: boolean) : void => {
+        highlight(baseBlack);
+        // Root cannot have a lack of black
+        if(isRoot(baseBlack)) {
+            setupBreakpoint(
+                `The new black node (highlighted) is the root, but the root cannot have insufficient black height.`,
+                'No additional action required',
+                makeNullNode(null),
+                baseBlack
+            );
+            return;
+        }
+    
+        const sibling : Node = siblingLeft ? baseBlack.parent!.left! : baseBlack.parent!.right!;
+    
+        // CASE 1: Red Sibling => Setup rotation to get black sibling
+        if(sibling.isRed) {
+            if(siblingLeft) {
+                setupBreakpoint(
+                    `The new black node (highlighted) has a red sibling (${sibling.value}), we right rotate the sibling up to reach a simpler case (black sibling).`,
+                    'Lack of Black - Right Rotate and Swap Colors to Get Black Sibling',
+                    sibling,
+                    baseBlack
+                );
+            }
+            else {
+                setupBreakpoint(
+                    `The new black node (highlighted) has a red sibling (${sibling.value}), we left rotate the sibling up to reach a simpler case (black sibling).`,
+                    'Lack of Black - Left Rotate and Swap Colors to Get Black Sibling',
+                    sibling,
+                    baseBlack
+                );
+            }
+        }
+    
+        // CASE 2: Black Sibling 
+
+        // First try to find a red child of sibling to rotate
+        // One and done rotation (sibling and red are in same direction)
+        else if(siblingLeft ? sibling.left!.isRed : sibling.right!.isRed) {
+            if(siblingLeft) {
+                setupBreakpoint(
+                    `The new black node (highlighted) has a black sibling (${sibling.value} with a red child on the outside (${sibling.left!.value}). We right rotate the sibling up the tree. The sibling keeps the color
+                    of its parent (${baseBlack.parent!.isRed ? "red" : "black"}), and its new children (${sibling.left!.value}) and (${baseBlack.parent}) are both colored black.`,
+                    'Lack of Black - Right Rotate and Color New Children Black',
+                    sibling, 
+                    baseBlack
+                );
+            }
+            else {
+                setupBreakpoint(
+                    `The new black node (highlighted) has a black sibling (${sibling.value} with a red child on the outside (${sibling.right!.value}). We right rotate the sibling up the tree. The sibling keeps the color
+                    of its parent (${baseBlack.parent!.isRed ? "red" : "black"}), and its new children (${sibling.right!.value}) and (${baseBlack.parent}) are both colored black.`,
+                    'Lack of Black - Left Rotate and Color New Children Black',
+                    sibling, 
+                    baseBlack
+                );
+            }
+        }
+    
+        // Setup rotation (sibling and red are in different direction)
+        else if(siblingLeft ? sibling.right!.isRed : sibling.left!.isRed) {
+            if(siblingLeft) {
+                setupBreakpoint(
+                    `The new black node (highlighted) has a black sibling (${sibling.value}) with a red child on the inside (${sibling.right!.value}). We left rotate the sibling down and swap colors
+                    of the sibling and the inside child to reach a simpler case (red child on the outside).`,
+                    'Lack of Black - Left Rotate and Swap Colors to Get Outside Red',
+                    sibling.right!,
+                    baseBlack,
+                )
+            }
+            else {
+                setupBreakpoint(
+                    `The new black node (highlighted) has a black sibling (${sibling.value}) with a red child on the inside (${sibling.left!.value}). We right rotate the sibling down and swap colors
+                    of the sibling and the inside child to reach a simpler case (red child on the outside).`,
+                    'Lack of Black - Right Rotate and Swap Colors to Get Outside Red',
+                    sibling.right!,
+                    baseBlack,
+                )
+            }
+        }
+            
+        // There are no red children of sibling => recolor sibling 
+        // red and potentially move lack of black upwards
+        else if(baseBlack.parent!.isRed) {
+                setupBreakpoint(
+                    `The new black node (highlighted) has a black sibling (${sibling.value}) with no red child. Since the parent (${baseBlack.parent!.value}) is red, we swap the colors of the parent
+                    and the sibling.`,
+                    'Lack of Black - Swap Colors of Parent and Sibling',
+                    sibling, 
+                    baseBlack
+                );
+            }
+        else {
+            setupBreakpoint(
+                `The new black node (highlighted) has a black sibling (${sibling.value}) with no red child. Since the parent (${baseBlack.parent!.value}) is black, we color the sibling red
+                and move the LACK OF BLACK up to the parent.`,
+                'Lack of Black - Color Sibling Red and Move Up',
+                sibling, 
+                baseBlack
+            );
+        }
     }
 
     const insert = (current: Node, val: number) : void => {
@@ -419,26 +511,19 @@ export default function Tree() {
                 <></>
             )
         }
+
+        const color : string = n.isRed ? "red" : "black";
+        const style : { color: string } = n.highlighted ? { color : 'gold' } : {color : 'white'}; // This is text color
+        const content : number | string = showValues ? (n.value > 0 ? n.value : 'Null') : (n.highlighted ? "!" : "");
+        const action : () => void = isNullNode(n) ? () => insertWrapper(n, left) : () => remove(root, n.value);
+
         return (
             <Stack align="center">
-                {isNullNode(n) ? (
-                    showNulls && (
-                        showValues ? 
-                            <Button color="black" radius="xl" size="compact-md" onClick={() => insertWrapper(n, left)}>
-                                Null
-                            </Button>
-                        :
-                            <Button color="black" radius="xl" onClick={() => insertWrapper(n, left)} /> 
-                    )
-                ) : (
-                    showValues ? 
-                        <Button color={n.isRed ? "red" : "black"} radius="xl" size="compact-md" onClick={() => remove(root, n.value)}>
-                            {Math.floor(n.value * 100) / 100}
-                        </Button>
-                    :
-                        <Button color={n.isRed ? "red" : "black"} radius="xl" onClick={() => remove(root, n.value)} /> 
+                {(!isNullNode(n) || showNulls) && (
+                    <Button style={style} color={color} radius="xl" size="compact-md" onClick={action}>
+                        {content}
+                    </Button>
                 )}
-                
                 <Group wrap="nowrap" style={{overflowAnchor: "auto"}} align="flex-start">
                     {drawTree(n.left, true)}
                     {drawTree(n.right, false)}
