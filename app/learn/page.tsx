@@ -154,7 +154,7 @@ export default function Learn() {
                 </List>
 
                 <Image
-                    src="/tree.png"
+                    src="/general/tree.png"
                     width={425}
                     height={425}
                     alt="A standard tree data structure"
@@ -198,7 +198,7 @@ export default function Learn() {
                 </Text>
 
                 <Image
-                    src="/bst.png"
+                    src="/general/bst.png"
                     width={425}
                     height={425}
                     alt="An example of a binary search tree"
@@ -238,7 +238,7 @@ export default function Learn() {
                 </Text>
 
                 <Image
-                    src="/step1.png"
+                    src="/delete/step1.png"
                     width={425}
                     height={425}
                     alt="An example of a binary search tree"
@@ -249,7 +249,7 @@ export default function Learn() {
                 </Text>
 
                 <Image
-                    src="/step2.png"
+                    src="/delete/step2.png"
                     width={425}
                     height={425}
                     alt="An example of a binary search tree"
@@ -296,7 +296,7 @@ export default function Learn() {
                 </Text>
 
                 <Image
-                    src="/lopsided.png"
+                    src="/general/lopsided.png"
                     width={425}
                     height={850}
                     alt="An example of a lopsided binary search tree"
@@ -337,7 +337,7 @@ export default function Learn() {
                     </Text>
 
                     <Image
-                        src="/insert.png"
+                        src="/insert/insert.png"
                         width={425}
                         height={425}
                         alt="A flow chart showing the logic to insert into a Red-Black Tree"
@@ -355,7 +355,7 @@ export default function Learn() {
                         </Text>
 
                         <Image
-                            src="/insert_red_sibling.gif"
+                            src="/insert/insert_red_sibling.gif"
                             unoptimized
                             width={425}
                             height={425}
@@ -383,7 +383,7 @@ export default function Learn() {
                         </Text>
 
                         <Image
-                            src="/rotation.gif"
+                            src="/general/rotation.gif"
                             unoptimized
                             width={425}
                             height={425}
@@ -401,7 +401,7 @@ export default function Learn() {
 
 
                         <Image
-                            src="/insert_black_sibling.gif"
+                            src="/insert/insert_black_sibling.gif"
                             unoptimized
                             width={425}
                             height={425}
@@ -444,7 +444,7 @@ export default function Learn() {
                     </Text>
 
                     <Image
-                        src="/delete.png"
+                        src="/delete/delete.png"
                         width={425}
                         height={425}
                         alt="A flow chart showing the logic to delete from a Red-Black Tree"
@@ -462,7 +462,7 @@ export default function Learn() {
                         </Text>
 
                         <Image
-                            src="/delete_red_sibling.gif"
+                            src="/delete/delete_red_sibling.gif"
                             unoptimized
                             width={425}
                             height={425}
@@ -482,7 +482,7 @@ export default function Learn() {
                         </Text>
 
                         <Image
-                            src="/delete_black_sibling_w_red_child.gif"
+                            src="/delete/delete_black_sibling_w_red_child.gif"
                             unoptimized
                             width={425}
                             height={425}
@@ -510,7 +510,7 @@ export default function Learn() {
 
 
                         <Image
-                            src="/delete_black_sibling_red_parent.gif"
+                            src="/delete/delete_black_sibling_red_parent.gif"
                             unoptimized
                             width={425}
                             height={425}
@@ -523,7 +523,7 @@ export default function Learn() {
                         </Text>
                         
                         <Image
-                            src="/delete_black_sibling_black_parent.gif"
+                            src="/delete/delete_black_sibling_black_parent.gif"
                             unoptimized
                             width={425}
                             height={425}

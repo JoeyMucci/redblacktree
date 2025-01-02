@@ -255,7 +255,7 @@ export default function Tree() {
                 if(firstRedLeft) {
                     setupBreakpoint(
                         `The new red node (${baseRed.value}) has a red parent (${baseRed.parent!.value}) with a black sibling (${uncle.value > 0 ? uncle.value : "Null"}).  
-                        Since the second red is on the inside, we rotate it to the outside with a left rotation and then apply the outside case.`,
+                        Since the second red is on the inside, we rotate the pair to the outside with a left rotation and then apply the outside case.`,
                         'SIMPLE_SETUP_ROTATION_LEFT',
                         baseRed
                     );
@@ -263,7 +263,7 @@ export default function Tree() {
                 else {
                     setupBreakpoint(
                         `The new red node (${baseRed.value}) has a red parent (${baseRed.parent!.value}) with a black sibling (${uncle.value > 0 ? uncle.value : "Null"}).  
-                        Since the second red is on the inside, we rotate it to the outside with a right rotation and then apply the outside case.`,
+                        Since the second red is on the inside, we rotate the pair to the outside with a right rotation and then apply the outside case.`,
                         'SIMPLE_SETUP_ROTATION_RIGHT',
                         baseRed
                     );
