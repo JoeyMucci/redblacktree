@@ -1,8 +1,9 @@
 'use client';
 
 import { useDisclosure } from '@mantine/hooks';
-import { Button, Divider, Group, NumberInput, Stack, Switch, Modal, Text } from '@mantine/core';
+import { Button, Divider, Group, NumberInput, Stack, Switch, Modal, Text, Center } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
+import { modals } from '@mantine/modals';
 import { useState } from 'react';
 
 interface Node {
@@ -84,24 +85,31 @@ export default function Tree() {
     const [saveNode, setSaveNode] = useState<Node>(makeNullNode(null));
     const [highlightedNode, setHighlightedNode] = useState<Node>(makeNullNode(null));
 
+    const confirmResetTree = () => modals.openConfirmModal({
+        title: 'Are you sure you want to reset the tree?',
+        children: (
+          <Text size="sm">
+            This action will erase all the nodes in the tree.
+          </Text>
+        ),
+        labels: { confirm: 'Confirm', cancel: 'Cancel' },
+        onConfirm: () => {root = makeNullNode(null); setRerenders((prev) => prev + 1)},
+        onCancel: () => {},
+      });
+
     const highlight = (n : Node) : void => {
+        highlightedNode.highlighted = false;
         n.highlighted = true;
         setHighlightedNode(n);
     }
 
-    const unhighlight = (n : Node) : void => {
-        n.highlighted = false;
-        setHighlightedNode(makeNullNode(null));
-    }
-
-
     const handleClose = () : void => {
         close();
-        doCleanupAction(cleanupAction, saveNode, highlightedNode);
+        doCleanupAction(cleanupAction, saveNode);
         setRerenders((prev) => prev + 1);
     }
 
-    const doCleanupAction = (cleanAct : string, saveN : Node, highN : Node) : void => {
+    const doCleanupAction = (cleanAct : string, saveN : Node) : void => {
         if(cleanAct === 'Turn Root Black') {
             root.isRed = false;
         }
@@ -136,14 +144,14 @@ export default function Tree() {
         else if(
             cleanAct === 'Red Alert - Left Rotate and Swap Colors' || 
             cleanAct === 'Lack of Black - Left Rotate and Swap Colors to Get Black Sibling' || 
-            cleanAct === 'Lack of Black - Right Rotate and Swap Colors to Get Outside Red') {
+            cleanAct === 'Lack of Black - Left Rotate and Swap Colors to Get Outside Red') {
                 leftRotate(saveN);
                 saveN.left!.isRed = true;
                 saveN.isRed = false;
                 if(cleanAct === 'Lack of Black - Left Rotate and Swap Colors to Get Black Sibling') {
                     handleLackOfBlack(saveN.left!.left!, false);
                 }
-                else if(cleanAct === 'Lack of Black - Right Rotate and Swap Colors to Get Outside Red') {
+                else if(cleanAct === 'Lack of Black - Left Rotate and Swap Colors to Get Outside Red') {
                     handleLackOfBlack(saveN.parent!.right!, true)
                 }
         }
@@ -167,7 +175,19 @@ export default function Tree() {
             saveN.isRed = true;
             handleLackOfBlack(saveN.parent!, !isLeftChild(saveN.parent!));
         }
-        unhighlight(highN);
+        else if(cleanAct === 'Replace Parent with Red Child Turned Black') {
+            saveN.isRed = false;
+            transferParent(saveN.parent!, saveN);
+        }
+        else if(cleanAct === 'Simply Remove the Red Node') {
+            const nullNode : Node = makeNullNode(null);
+            transferParent(saveN, nullNode);
+        }
+        else if(cleanAct === 'Replace Value with In-Order Predecessor to Get One Child') {
+            const iop = inOrderPredecessor(saveN.value);
+            saveN.value = iop;
+            remove(saveN.left!, iop);
+        }
     }
 
     const setupBreakpoint =  (msg : string, cleanAct: string, saveN : Node, highN : Node) : void => {
@@ -176,10 +196,11 @@ export default function Tree() {
             setModalMessage(msg);
             open();
             setCleanupAction(cleanAct);
-            setSaveNode(saveN);
+            setSaveNode(saveN)
+            highlight(highN);
         } 
         else {
-            doCleanupAction(cleanAct, saveN, highN);
+            doCleanupAction(cleanAct, saveN);
         }
     }
 
@@ -213,7 +234,6 @@ export default function Tree() {
     
         // CASE 1: Red Uncle => Recolor parents, grandpa and move issue upwards
         if(uncle.isRed) {
-            setSaveNode(grandpa);
             setupBreakpoint(
                 `The new red node (${baseRed.value}) has a red parent (${baseRed.parent!.value}) with a red sibling (${uncle.value}). 
                     Change colors of the parent, its sibling, and the grandparent (${grandpa.value}) before checking for another RED ALERT at the grandparent.`,
@@ -253,7 +273,7 @@ export default function Tree() {
             else if(firstRedLeft) {
                     setupBreakpoint(
                         `The new red node (${baseRed.value}) has a red parent (${baseRed.parent!.value}) with a black sibling (${uncle.value > 0 ? uncle.value : "Null"}).
-                        Since ${baseRed.value} is on the outside, we right rotate the red chain up. Also swap colors of parent and grandparent (${grandpa.value}).`,
+                        Since ${baseRed.value} is on the outside, we right rotate the red chain up. Also swap colors of the parent and grandparent (${grandpa.value}).`,
                         'Red Alert - Right Rotate and Swap Colors',
                         baseRed.parent!,
                         makeNullNode(null),
@@ -262,7 +282,7 @@ export default function Tree() {
             else {
                 setupBreakpoint(
                     `The new red node (${baseRed.value}) has a red parent (${baseRed.parent!.value}) with a black sibling (${uncle.value > 0 ? uncle.value : "Null"}).
-                        Since ${baseRed.value} is on the outside, we left rotate the red chain up. Also swap colors of parent and grandparent (${grandpa.value}).`,
+                        Since ${baseRed.value} is on the outside, we left rotate the red chain up. Also swap colors of the parent and grandparent (${grandpa.value}).`,
                     'Red Alert - Left Rotate and Swap Colors',
                     baseRed.parent!,
                     makeNullNode(null),
@@ -272,12 +292,11 @@ export default function Tree() {
     }
 
     const handleLackOfBlack = (baseBlack : Node, siblingLeft: boolean) : void => {
-        highlight(baseBlack);
         // Root cannot have a lack of black
         if(isRoot(baseBlack)) {
             setupBreakpoint(
                 `The new black node (highlighted) is the root, but the root cannot have insufficient black height.`,
-                'No additional action required',
+                'No Additional Action Required',
                 makeNullNode(null),
                 baseBlack
             );
@@ -298,7 +317,8 @@ export default function Tree() {
             }
             else {
                 setupBreakpoint(
-                    `The new black node (highlighted) has a red sibling (${sibling.value}), we left rotate the sibling up to reach a simpler case (black sibling).`,
+                    `The new black node (highlighted) has a red sibling (${sibling.value}), we left rotate the sibling up and swap the colors of the sibling and its 
+                    pre-rotation parent (${sibling.parent!.value}) to reach a simpler case (black sibling).`,
                     'Lack of Black - Left Rotate and Swap Colors to Get Black Sibling',
                     sibling,
                     baseBlack
@@ -313,8 +333,8 @@ export default function Tree() {
         else if(siblingLeft ? sibling.left!.isRed : sibling.right!.isRed) {
             if(siblingLeft) {
                 setupBreakpoint(
-                    `The new black node (highlighted) has a black sibling (${sibling.value} with a red child on the outside (${sibling.left!.value}). We right rotate the sibling up the tree. The sibling keeps the color
-                    of its parent (${baseBlack.parent!.isRed ? "red" : "black"}), and its new children (${sibling.left!.value}) and (${baseBlack.parent}) are both colored black.`,
+                    `The new black node (highlighted) has a black sibling (${sibling.value}) with a red child on the outside (${sibling.left!.value}). We right rotate the sibling up the tree. The sibling keeps the color
+                    of its parent (${baseBlack.parent!.isRed ? "red" : "black"}), and its new children (${sibling.left!.value}) and (${baseBlack.parent!.value}) are both colored black.`,
                     'Lack of Black - Right Rotate and Color New Children Black',
                     sibling, 
                     baseBlack
@@ -322,8 +342,8 @@ export default function Tree() {
             }
             else {
                 setupBreakpoint(
-                    `The new black node (highlighted) has a black sibling (${sibling.value} with a red child on the outside (${sibling.right!.value}). We right rotate the sibling up the tree. The sibling keeps the color
-                    of its parent (${baseBlack.parent!.isRed ? "red" : "black"}), and its new children (${sibling.right!.value}) and (${baseBlack.parent}) are both colored black.`,
+                    `The new black node (highlighted) has a black sibling (${sibling.value}) with a red child on the outside (${sibling.right!.value}). We right rotate the sibling up the tree. The sibling keeps the color
+                    of its parent (${baseBlack.parent!.isRed ? "red" : "black"}), and its new children (${sibling.right!.value}) and (${baseBlack.parent!.value}) are both colored black.`,
                     'Lack of Black - Left Rotate and Color New Children Black',
                     sibling, 
                     baseBlack
@@ -442,36 +462,58 @@ export default function Tree() {
             let skipUpdate : boolean = false;
 
             if(!hasLeftChild && !hasRightChild) {
-                const nullNode : Node = makeNullNode(null);
-                const ilc = isLeftChild(current);
-                transferParent(current, nullNode);   
                 if(!current.isRed) {
+                    const nullNode : Node = makeNullNode(null);
+                    const ilc = isLeftChild(current);
+                    transferParent(current, nullNode);   
                     handleLackOfBlack(nullNode, !ilc);
                 }
+                else {
+                    setupBreakpoint(
+                        `The node we are removing (highlighted ${val}) is red, so no properties of the Red-Black Tree can be violated.`,
+                        'Simply Remove the Red Node',
+                        current,
+                        current
+                    );
+                }
             }
-
+            
             // One child => child is red => current is black => 
             // Remove current and replace it with its child, 
             // color it black so no lack of black
             else if(hasLeftChild && !hasRightChild) {
-                current.left!.isRed = false;
-                transferParent(current, current.left!);
+                setupBreakpoint(
+                    `We are trying to remove the highlighted ${val} but it has one red child (${current.left!.value}), so we need to have the child take the place and the color of the removed node.`,
+                    'Replace Parent with Red Child Turned Black',
+                    current.left!,
+                    current
+                );
             }
             else if(!hasLeftChild && hasRightChild) {
-                current.right!.isRed = false;
-                transferParent(current, current.right!);
+                setupBreakpoint(
+                    `We are trying to remove the highlighted ${val} but it has one red child (${current.right!.value}), so we need to have the child take the place and the color of the removed node.`,
+                    'Replace Parent with Red Child Turned Black',
+                    current.right!,
+                    current
+                );
             }
+
+            
 
             // Two children => Copy value of predecessor into 
             // current node then delete the predecessor 
             else {
-                const iop = inOrderPredecessor(current.value);
-                current.value = iop;
-                remove(current.left!, iop);
-                skipUpdate = true; // Do not update the tree (for now)
+                setupBreakpoint(
+                    `We are trying to remove (${val}) but it has two children (${current.left!.value} and ${current.right!.value}), so we need to find the largest value in the tree
+                    smaller than ${val}, put that value where ${val} is, and then delete the node that originally held that value.`,
+                    'Replace Value with In-Order Predecessor to Get One Child',
+                    current,
+                    makeNullNode(null)
+                );
+                skipUpdate = true; 
             }
 
-            if(!skipUpdate) {
+            if(!skipUpdate && !showAlerts) {
                 setRerenders((prev) => prev + 1);
             }
             
@@ -512,19 +554,21 @@ export default function Tree() {
             )
         }
 
+        const showHighlight : boolean = n.highlighted !== null && n.highlighted! && opened;
+
         const color : string = n.isRed ? "red" : "black";
-        const style : { color: string } = n.highlighted ? { color : 'gold' } : {color : 'white'}; // This is text color
-        const content : number | string = showValues ? (n.value > 0 ? n.value : 'Null') : (n.highlighted ? "!" : "");
-        const action : () => void = isNullNode(n) ? () => insertWrapper(n, left) : () => remove(root, n.value);
+        const style : { color: string } = showHighlight ? { color : 'gold' } : {color : 'white'}; // This is text color
+        const content : number | string = showValues ? (n.value > 0 ? n.value : 'Null') : (showHighlight ? "!" : "");
+        const action : () => void = isNullNode(n) ? () => insertWrapper(n, left) : () => remove(root, n.value); // Click on null nodes to add, non-null nodes to remove that node
 
         return (
             <Stack align="center">
-                {(!isNullNode(n) || showNulls) && (
+                {(!isNullNode(n) || showNulls || showHighlight) && (
                     <Button style={style} color={color} radius="xl" size="compact-md" onClick={action}>
                         {content}
                     </Button>
                 )}
-                <Group wrap="nowrap" style={{overflowAnchor: "auto"}} align="flex-start">
+                <Group wrap="nowrap" align="flex-start">
                     {drawTree(n.left, true)}
                     {drawTree(n.right, false)}
                 </Group>
@@ -589,10 +633,17 @@ export default function Tree() {
                     />
                 </Stack>
             </Group>
+            <Center>
+                <Button radius="xl" onClick={confirmResetTree}>
+                    Reset Tree
+                </Button>
+            </Center>
             <Divider my="md" style={{width:'100%'}} color='white'/>
             {drawTree(root, false)} 
             <Modal opened={opened} onClose={handleClose} title={modalTitle}>
-                {modalMessage}
+                <Text size="sm">
+                    {modalMessage}
+                </Text>
             </Modal>
         </>
     )
