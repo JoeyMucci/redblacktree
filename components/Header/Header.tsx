@@ -17,7 +17,7 @@ export function Header() {
                                 src="/favicon.png"
                                 width={30}
                                 height={30}
-                                alt="A pixel art Red-Black Tree which is the mascot"
+                                alt="A clip art Red-Black Tree which is the mascot"
                             />
                         </Button>
 

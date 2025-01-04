@@ -11,7 +11,7 @@ export default function HomePage() {
               src="/favicon.png"
               width={425}
               height={425}
-              alt="A GIF showing a delete when the sibling is red"
+              alt="A clip art Red-Black Tree which is the mascot"
           />
           <Title>
               <Text
@@ -54,7 +54,6 @@ export default function HomePage() {
             </Center>
 
             <br />
-            <br />
 
             <Center>
               <Group gap="6px">
@@ -64,6 +63,22 @@ export default function HomePage() {
 
                 <Link href="https://www.cs.usfca.edu/~galles/visualization/RedBlack.html">
                   inspiration
+                </Link>
+
+                <Text component ="span">
+                  for this project
+                </Text>
+              </Group>
+            </Center>
+
+            <Center>
+              <Group gap="6px">
+                <Text component ="span">
+                  Check out the 
+                </Text>
+
+                <Link href="https://github.com/JoeyMucci/redblacktree">
+                  source code
                 </Link>
 
                 <Text component ="span">
