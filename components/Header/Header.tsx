@@ -7,20 +7,19 @@ import classes from './Header.module.css';
 
 export function Header() {
     const router = useRouter();
-
     return (
         <header className={classes.header}>
             <Container>
                 <Center>
                     <Group>
-                        <Image
-                            src="/favicon.png"
-                            width={30}
-                            height={30}
-                            onClick={() => {router.push('/')}}
-                            style={{ cursor: 'pointer' }}
-                            alt="A pixel art Red-Black Tree which is the mascot"
-                        />
+                        <Button size="lg" onClick={() => {router.push('/')}} >
+                            <Image
+                                src="/favicon.png"
+                                width={30}
+                                height={30}
+                                alt="A clip art Red-Black Tree which is the mascot"
+                            />
+                        </Button>
 
                         <Button size="lg" onClick={() => {router.push('/tree')}} >
                             Build Tree
