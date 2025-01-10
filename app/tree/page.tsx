@@ -15,57 +15,16 @@ interface Node {
     highlighted? : boolean
 }
 
-// Null Nodes have value = MIN
-const makeNullNode = (par : Node | null) : Node => { return {value: MIN, isRed: false, left: null, right: null, parent: par} }
-const isNullNode = (n : Node) : boolean => { return n.value === MIN }
-const isLeftChild = (n : Node) : boolean => { return !isRoot(n) && n.value === n.parent!.left!.value }
-const isRoot = (n : Node) : boolean => { return !n.parent }
-
-// All values in the tree must be greater than MIN and less than MAX
-const MIN = 0;
-const MAX = 1000;
-let root : Node = makeNullNode(null);
-
-const assignLeftChild = (parent: Node, child : Node) : void => {
-    parent.left = child;
-    child.parent = parent;
-}
-
-const assignRightChild = (parent: Node, child : Node) : void => {
-    parent.right = child;
-    child.parent = parent;
-}
-
-const transferParent = (oldChild: Node, newChild: Node) : void => {
-    if(isRoot(oldChild)) {
-        root = newChild;
-        newChild.parent = null;
-    }
-    else if(isLeftChild(oldChild)) {
-        assignLeftChild(oldChild.parent!, newChild);
-    }
-    else {
-        assignRightChild(oldChild.parent!, newChild);
-    }
-}
-
-// The newRoot for a rotation will never be the old root or a null node
-const leftRotate = (newRoot : Node) : void => {
-    const par = newRoot.parent!;
-    transferParent(par, newRoot);
-    assignRightChild(par, newRoot.left!);
-    assignLeftChild(newRoot, par);
-}
-
-const rightRotate = (newRoot : Node) : void => {
-    const par = newRoot.parent!;
-    transferParent(par, newRoot);
-    assignLeftChild(par, newRoot.right!);
-    assignRightChild(newRoot, par);
-}
-
 export default function Tree() {
+    // Null Nodes have value = MIN
+    const makeNullNode = (par : Node | null) : Node => { return {value: MIN, isRed: false, left: null, right: null, parent: par} }
+    const isNullNode = (n : Node) : boolean => { return n.value === MIN }
+    const isLeftChild = (n : Node) : boolean => { return !isRoot(n) && n.value === n.parent!.left!.value }
+    const isRoot = (n : Node) : boolean => { return !n.parent }
+    const MIN = 0;
+    const MAX = 1000;
     const [, setRerenders] = useState<number>(0);
+    const [root, setRoot] = useState<Node>(makeNullNode(null));
     const [showAlerts, setShowAlerts] = useState<boolean>(true);
     const [showValues, setShowValues] = useState<boolean>(true); 
     const [showNulls, setShowNulls] = useState<boolean>(true);
@@ -77,6 +36,46 @@ export default function Tree() {
     const [resolveAction, setResolveAction] = useState<string>('No Additional Action Required');
     const [saveNode, setSaveNode] = useState<Node>(makeNullNode(null));
     const [highlightedNode, setHighlightedNode] = useState<Node>(makeNullNode(null));
+
+    // AUXILIARY FUNCTIONS
+
+    const assignLeftChild = (parent: Node, child : Node) : void => {
+        parent.left = child;
+        child.parent = parent;
+    }
+
+    const assignRightChild = (parent: Node, child : Node) : void => {
+        parent.right = child;
+        child.parent = parent;
+    }
+
+    const transferParent = (oldChild: Node, newChild: Node) : void => {
+        if(isRoot(oldChild)) {
+            setRoot(newChild);
+            newChild.parent = null;
+        }
+        else if(isLeftChild(oldChild)) {
+            assignLeftChild(oldChild.parent!, newChild);
+        }
+        else {
+            assignRightChild(oldChild.parent!, newChild);
+        }
+    }
+
+    // The newRoot for a rotation will never be the old root or a null node
+    const leftRotate = (newRoot : Node) : void => {
+        const par = newRoot.parent!;
+        transferParent(par, newRoot);
+        assignRightChild(par, newRoot.left!);
+        assignLeftChild(newRoot, par);
+    }
+
+    const rightRotate = (newRoot : Node) : void => {
+        const par = newRoot.parent!;
+        transferParent(par, newRoot);
+        assignLeftChild(par, newRoot.right!);
+        assignRightChild(newRoot, par);
+    }
 
     // CORE FUNCTIONS
 
@@ -434,7 +433,7 @@ export default function Tree() {
             </Text>
         ),
         labels: { confirm: 'Confirm', cancel: 'Cancel' },
-        onConfirm: () => {root = makeNullNode(null); setRerenders((prev) => prev + 1)},
+        onConfirm: () => {setRoot(makeNullNode(null)); setRerenders((prev) => prev + 1)},
         onCancel: () => {},
         });
     }
@@ -655,6 +654,7 @@ export default function Tree() {
                         max={MAX - 1}
                         value={insertVal}
                         onChange={setInsertVal}
+                        data-testid="insertInput"
                     />
                     <Button radius="xl" disabled={insertVal === ""} onClick={() => {insert(root, insertVal as number); setInsertVal("")}}>
                         Insert
@@ -669,6 +669,7 @@ export default function Tree() {
                         max={MAX - 1}
                         value={deleteVal}
                         onChange={setDeleteVal}
+                        data-testid="deleteInput"
                     />
                     <Button radius="xl" disabled={deleteVal === ""} onClick={() => {del(root, deleteVal as number); setDeleteVal("")}}>
                         Delete
