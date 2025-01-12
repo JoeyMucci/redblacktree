@@ -79,27 +79,31 @@ export default function Tree() {
 
     // CORE FUNCTIONS
 
-    // resolveAct specifies which action to do, saveN specifies a Node crucial to the action
+    // resolveAct specifies which action to d
+    // saveN specifies a node crucial to the action, usually the root of the subtree after rotation
     const resolveOperation = (resolveAct : string, saveN : Node) : void => {
         if(resolveAct === 'Turn Root Black') {
             root.isRed = false;
         }
 
         else if(resolveAct === 'Red Alert - Recolor and Move Up') {
-            saveN.isRed = true;
-            saveN.left!.isRed = false;
-            saveN.right!.isRed = false;
-            handleRedAlert(saveN);
+            const grandpa : Node = saveN;
+            grandpa.isRed = true;
+            grandpa.left!.isRed = false;
+            grandpa.right!.isRed = false;
+            handleRedAlert(grandpa);
         }
 
         // Setup Rotations
         else if(resolveAct === 'Red Alert - Left Rotate Red Pair to Outside') {
-            leftRotate(saveN);
-            handleRedAlert(saveN.left!);
+            const baseRed : Node = saveN;
+            leftRotate(baseRed);
+            handleRedAlert(baseRed.left!);
         }
         else if(resolveAct === 'Red Alert - Right Rotate Red Pair to Outside') {
-            rightRotate(saveN);
-            handleRedAlert(saveN.right!);
+            const baseRed : Node = saveN;
+            rightRotate(baseRed);
+            handleRedAlert(baseRed.right!);
         }
 
         // These three actions share rotation + recoloring, the Lack of Black's are setup steps though
@@ -109,14 +113,15 @@ export default function Tree() {
             resolveAct === 'Lack of Black - Right Rotate and Swap Colors to Get Black Sibling' ||
             resolveAct === 'Lack of Black - Right Rotate and Swap Colors to Get Outside Red'
             ) {
-                rightRotate(saveN);
-                saveN.right!.isRed = true;
-                saveN.isRed = false;
+                const newSubtreeRoot : Node = saveN;
+                rightRotate(newSubtreeRoot);
+                newSubtreeRoot.right!.isRed = true;
+                newSubtreeRoot.isRed = false;
                 if(resolveAct === 'Lack of Black - Right Rotate and Swap Colors to Get Black Sibling') {
-                    handleLackOfBlack(saveN.right!.right!, true);
+                    handleLackOfBlack(newSubtreeRoot.right!.right!, true);
                 }
                 else if(resolveAct === 'Lack of Black - Right Rotate and Swap Colors to Get Outside Red') {
-                    handleLackOfBlack(saveN.parent!.left!, false)
+                    handleLackOfBlack(newSubtreeRoot.parent!.left!, false)
                 }
         }
         else if(
@@ -124,14 +129,15 @@ export default function Tree() {
             resolveAct === 'Lack of Black - Left Rotate and Swap Colors to Get Black Sibling' || 
             resolveAct === 'Lack of Black - Left Rotate and Swap Colors to Get Outside Red'
             ) {
-                leftRotate(saveN);
-                saveN.left!.isRed = true;
-                saveN.isRed = false;
+                const newSubtreeRoot : Node = saveN;
+                leftRotate(newSubtreeRoot);
+                newSubtreeRoot.left!.isRed = true;
+                newSubtreeRoot.isRed = false;
                 if(resolveAct === 'Lack of Black - Left Rotate and Swap Colors to Get Black Sibling') {
-                    handleLackOfBlack(saveN.left!.left!, false);
+                    handleLackOfBlack(newSubtreeRoot.left!.left!, false);
                 }
                 else if(resolveAct === 'Lack of Black - Left Rotate and Swap Colors to Get Outside Red') {
-                    handleLackOfBlack(saveN.parent!.right!, true)
+                    handleLackOfBlack(newSubtreeRoot.parent!.right!, true)
                 }
         }
 
@@ -139,42 +145,48 @@ export default function Tree() {
             resolveAct === 'Lack of Black - Right Rotate and Color New Children Black' || 
             resolveAct === 'Lack of Black - Left Rotate and Color New Children Black'
             ) {
-                const wasParentRed : boolean = saveN.parent!.isRed;
+                const sibling : Node = saveN;
+                const wasParentRed : boolean = sibling.parent!.isRed;
                 if(resolveAct === 'Lack of Black - Right Rotate and Color New Children Black') {
-                    rightRotate(saveN);
+                    rightRotate(sibling);
                 }
                 else {
-                    leftRotate(saveN);
+                    leftRotate(sibling);
                 }
-                saveN.isRed = wasParentRed;
-                saveN.left!.isRed = false;
-                saveN.right!.isRed = false;
+                sibling.isRed = wasParentRed;
+                sibling.left!.isRed = false;
+                sibling.right!.isRed = false;
         }
 
         else if(resolveAct === 'Lack of Black - Swap Colors of Parent and Sibling') {
-            saveN.isRed = true;
-            saveN.parent!.isRed = false;
+            const sibling : Node = saveN;
+            sibling.isRed = true;
+            sibling.parent!.isRed = false;
         }
 
         else if(resolveAct === 'Lack of Black - Color Sibling Red and Move Up') {
-            saveN.isRed = true;
-            handleLackOfBlack(saveN.parent!, !isLeftChild(saveN.parent!));
+            const sibling : Node = saveN;
+            sibling.isRed = true;
+            handleLackOfBlack(sibling.parent!, !isLeftChild(sibling.parent!));
         }
 
         else if(resolveAct === 'Replace Parent with Red Child Turned Black') {
-            saveN.isRed = false;
-            transferParent(saveN.parent!, saveN);
+            const redChild : Node = saveN;
+            redChild.isRed = false;
+            transferParent(redChild.parent!, redChild);
         }
 
         else if(resolveAct === 'Simply Remove the Red Node') {
+            const redLeaf : Node = saveN;
             const nullNode : Node = makeNullNode(null);
-            transferParent(saveN, nullNode);
+            transferParent(redLeaf, nullNode);
         }
 
         else if(resolveAct === 'Replace Value with In-Order Predecessor to Get One Child') {
-            const iop = orderHelper().inOrderPredecessor(saveN.value);
-            saveN.value = iop;
-            del(saveN.left!, iop);
+            const parentOfTwo : Node = saveN;
+            const iop = orderHelper().inOrderPredecessor(parentOfTwo.value);
+            parentOfTwo.value = iop;
+            del(parentOfTwo.left!, iop);
         }
     }
 
@@ -237,7 +249,7 @@ export default function Tree() {
                 `The new red node (${baseRed.value}) has a red parent (${baseRed.parent!.value}) with a red sibling (${uncle.value}). 
                 Change colors of the parent, its sibling, and the grandparent (${grandpa.value}) before checking for another RED ALERT 
                 at the grandparent.`,
-                grandpa,
+                grandpa, // Grandpa has its children colored black, itself colored red before checking for red alert
                 makeNullNode(null),
             );
         }
@@ -254,7 +266,7 @@ export default function Tree() {
                         `The new red node (${baseRed.value}) has a red parent (${baseRed.parent!.value}) with a black sibling 
                         (${uncle.value > 0 ? uncle.value : "Null"}).
                         Since ${baseRed.value} is on the inside, we left rotate the pair to the outside to reach a simpler a case.`,
-                        baseRed,
+                        baseRed, // Base red is the new root of subtree
                         makeNullNode(null),
                     );
                 }
@@ -264,7 +276,7 @@ export default function Tree() {
                         `The new red node (${baseRed.value}) has a red parent (${baseRed.parent!.value}) with a black sibling 
                         (${uncle.value > 0 ? uncle.value : "Null"}).
                         Since ${baseRed.value} is on the inside, we right rotate the pair to the outside to reach a simpler a case.`,
-                        baseRed,
+                        baseRed, // Base red is the new root of subtree
                         makeNullNode(null),
                     );
                 }
@@ -277,7 +289,7 @@ export default function Tree() {
                         `The new red node (${baseRed.value}) has a red parent (${baseRed.parent!.value}) with a black sibling 
                         (${uncle.value > 0 ? uncle.value : "Null"}). Since ${baseRed.value} is on the outside, we right rotate the 
                         red chain up. Also swap colors of the parent and grandparent (${grandpa.value}).`,
-                        baseRed.parent!,
+                        baseRed.parent!, // Base red's parent is the new root of subtree
                         makeNullNode(null),
                     );
                 }
@@ -287,7 +299,7 @@ export default function Tree() {
                     `The new red node (${baseRed.value}) has a red parent (${baseRed.parent!.value}) with a black sibling 
                     (${uncle.value > 0 ? uncle.value : "Null"}). Since ${baseRed.value} is on the outside, we left rotate the 
                     red chain up. Also swap colors of the parent and grandparent (${grandpa.value}).`,
-                    baseRed.parent!,
+                    baseRed.parent!, // Base red's parent is the new root of subtree
                     makeNullNode(null),
                 );
             }
@@ -315,7 +327,7 @@ export default function Tree() {
                     'Lack of Black - Right Rotate and Swap Colors to Get Black Sibling',
                     `The new black node (highlighted) has a red sibling (${sibling.value}), we right rotate the sibling up 
                     to reach a simpler case (black sibling).`,
-                    sibling,
+                    sibling, // Sibling is the new root of subtree
                     baseBlack
                 );
             }
@@ -325,7 +337,7 @@ export default function Tree() {
                     `The new black node (highlighted) has a red sibling (${sibling.value}), we left rotate the 
                     sibling up and swap the colors of the sibling and its pre-rotation parent (${sibling.parent!.value})
                     to reach a simpler case (black sibling).`,      
-                    sibling,
+                    sibling, // Sibling is the new root of subtree
                     baseBlack
                 );
             }
@@ -343,7 +355,7 @@ export default function Tree() {
                     (${sibling.left!.value}). We right rotate the sibling up the tree. The sibling keeps the color
                     of its parent (${baseBlack.parent!.isRed ? "red" : "black"}), and its new children 
                     (${sibling.left!.value} and ${baseBlack.parent!.value}) are both colored black.`, 
-                    sibling, 
+                    sibling, // Sibling is the new root of subtree
                     baseBlack
                 );
             }
@@ -354,7 +366,7 @@ export default function Tree() {
                     (${sibling.right!.value}). We right rotate the sibling up the tree. The sibling keeps the color
                     of its parent (${baseBlack.parent!.isRed ? "red" : "black"}), and its new children
                     (${sibling.right!.value} and ${baseBlack.parent!.value}) are both colored black.`,
-                    sibling, 
+                    sibling, // Sibling is the new root of subtree
                     baseBlack
                 );
             }
@@ -368,7 +380,7 @@ export default function Tree() {
                     `The new black node (highlighted) has a black sibling (${sibling.value}) with a red child on the inside
                     (${sibling.right!.value}). We left rotate the sibling down and swap colors
                     of the sibling and the inside child to reach a simpler case (red child on the outside).`,
-                    sibling.right!,
+                    sibling.right!, // Right child of sibling is new root of subtree
                     baseBlack,
                 )
             }
@@ -378,7 +390,7 @@ export default function Tree() {
                     `The new black node (highlighted) has a black sibling (${sibling.value}) with a red child on the inside
                     (${sibling.left!.value}). We right rotate the sibling down and swap colors
                     of the sibling and the inside child to reach a simpler case (red child on the outside).`,
-                    sibling.right!,
+                    sibling.left!, // Left child of sibling is new root of subtree
                     baseBlack,
                 )
             }
@@ -391,7 +403,7 @@ export default function Tree() {
                     'Lack of Black - Swap Colors of Parent and Sibling',
                     `The new black node (highlighted) has a black sibling (${sibling.value}) with no red child. Since the parent
                     (${baseBlack.parent!.value}) is red, we swap the colors of the parent and the sibling.`,      
-                    sibling, 
+                    sibling, // Sibling gets colored red and its parent gets colored black
                     baseBlack
                 );
             }
@@ -400,7 +412,7 @@ export default function Tree() {
                 'Lack of Black - Color Sibling Red and Move Up',
                 `The new black node (highlighted) has a black sibling (${sibling.value}) with no red child. Since the parent
                 (${baseBlack.parent!.value}) is black, we color the sibling red and move the LACK OF BLACK up to the parent.`,
-                sibling, 
+                sibling, // Sibling gets colored red and its parent is now the root of a subtree w/ insufficient black height
                 baseBlack
             );
         }
@@ -499,7 +511,7 @@ export default function Tree() {
                         'Simply Remove the Red Node',
                         `The node we are removing (highlighted ${val}) is red, so no 
                         properties of the Red-Black Tree can be violated.`,
-                        current,
+                        current, // Current is the node we remove
                         current
                     );
                 }
@@ -513,7 +525,7 @@ export default function Tree() {
                     'Replace Parent with Red Child Turned Black',
                     `We are trying to remove the highlighted ${val} but it has one red child (${current.left!.value}),
                     so we need to have the child take the place and the color of the removed node.`,
-                    current.left!,
+                    current.left!, // Current's left child takes the spot and color of its parent
                     current
                 );
             }
@@ -522,7 +534,7 @@ export default function Tree() {
                     'Replace Parent with Red Child Turned Black',
                     `We are trying to remove the highlighted ${val} but it has one red child (${current.right!.value}),
                     so we need to have the child take the place and the color of the removed node.`,
-                    current.right!,
+                    current.right!, // Current's right child takes the spot and color of its parent
                     current
                 );
             }
@@ -535,7 +547,7 @@ export default function Tree() {
                     `We are trying to remove (${val}) but it has two children (${current.left!.value} and
                     ${current.right!.value}), so we need to find the largest value in the tree smaller than ${val},
                     put that value where ${val} is, and then delete the node that originally held that value.`,
-                    current,
+                    current, // Find the in-order predecessor to current before calling del again 
                     makeNullNode(null)
                 );
                 // Skip rerendering the tree if no explanation because this is a setup step. 
