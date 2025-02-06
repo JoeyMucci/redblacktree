@@ -1,37 +1,8 @@
-# Mantine Next.js template
+# Red Black Tree Lesson
 
-This is a template for [Next.js](https://nextjs.org/) app router + [Mantine](https://mantine.dev/).
-If you want to use pages router instead, see [next-pages-template](https://github.com/mantinedev/next-pages-template).
+Use this website to learn the ins and outs of the Red-Black Tree in order to prepare for your Data Structures Final (or just to learn something new). On this website you can see the rules of a Red-Black Tree carried out in real-time as you interactively build your own Red-Black Tree. If you do not know anything about Red-Black Trees, you can start on the learn page which explains the properties of a Red-Black Tree, why we need it, and ultimately how to understand its implementation. 
 
-## Features
+## Contributing
+If you have an idea to improve this tool then by all means open a pull request. Just make sure that all of my beloved tests pass or else Github Actions will shut down the deployment 🙂
 
-This template comes with the following features:
-
-- [PostCSS](https://postcss.org/) with [mantine-postcss-preset](https://mantine.dev/styles/postcss-preset)
-- [TypeScript](https://www.typescriptlang.org/)
-- [Storybook](https://storybook.js.org/)
-- [Jest](https://jestjs.io/) setup with [React Testing Library](https://testing-library.com/docs/react-testing-library/intro)
-- ESLint setup with [eslint-config-mantine](https://github.com/mantinedev/eslint-config-mantine)
-
-## npm scripts
-
-### Build and dev scripts
-
-- `dev` – start dev server
-- `build` – bundle application for production
-- `analyze` – analyzes application bundle with [@next/bundle-analyzer](https://www.npmjs.com/package/@next/bundle-analyzer)
-
-### Testing scripts
-
-- `typecheck` – checks TypeScript types
-- `lint` – runs ESLint
-- `prettier:check` – checks files with Prettier
-- `jest` – runs jest tests
-- `jest:watch` – starts jest watch
-- `test` – runs `jest`, `prettier:check`, `lint` and `typecheck` scripts
-
-### Other scripts
-
-- `storybook` – starts storybook dev server
-- `storybook:build` – build production storybook bundle to `storybook-static`
-- `prettier:write` – formats all files with Prettier
+![rb_tree_all_tests](https://github.com/user-attachments/assets/9ff7c63d-f8e8-44ab-8138-9fbde556dd9e)
